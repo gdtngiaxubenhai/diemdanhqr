@@ -131,29 +131,21 @@ function onScanSuccess(text){
 // ================== SEND ==================
 function sendData(text){
 
-  fetch("YOUR_SCRIPT_URL?mtn=" + encodeURIComponent(text))
-  .then(r => r.json())
-  .then(res => {
+  const cleanText = text.trim();
 
-    beep(res.success);
-    vibrate();
+  fetch("YOUR_SCRIPT_URL?mtn=" + encodeURIComponent(cleanText))
+  .then(async (r) => {
 
-    result.innerHTML = res.success
-      ? `✅ ${res.message}<br><b>${res.name}</b><br>${res.lop}`
-      : `❌ ${res.message}`;
+    const raw = await r.text();
+    console.log("SERVER:", raw);
 
-    resetScan();
+    let data = JSON.parse(raw);
+    handleResult(data);
 
   })
   .catch(() => {
 
-    if(!navigator.onLine){
-      offlineQueue.push(text);
-      saveQueue();
-      result.innerHTML = "📶 Mất mạng - đã lưu";
-    } else {
-      result.innerHTML = "⚠️ Lỗi server";
-    }
+    result.innerHTML = "❌ Lỗi server / dữ liệu QR";
 
     beep(false);
     vibrate();
