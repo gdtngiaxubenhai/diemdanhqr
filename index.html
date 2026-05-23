@@ -1,16 +1,11 @@
 <!DOCTYPE html>
-
 <html>
-
 <head>
-
-<meta name="viewport"
-   content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
 <style>
-
 body{
   font-family:Arial;
   background:#111;
@@ -27,6 +22,11 @@ body{
   padding:20px;
 }
 
+button{
+  padding:10px 15px;
+  margin:10px;
+  font-size:16px;
+}
 </style>
 
 </head>
@@ -35,136 +35,125 @@ body{
 
 <h1>📷 Điểm Danh QR</h1>
 
+<button onclick="switchCamera()">🔄 Đổi camera</button>
+
 <div id="reader"></div>
 
-<div id="result">
-
-Sẵn sàng quét
-
-</div>
+<div id="result">Sẵn sàng quét</div>
 
 <script>
 
-const result =
-  document.getElementById(
-    "result"
-  );
+const result = document.getElementById("result");
 
 let scanning = true;
+let qr = new Html5Qrcode("reader");
+let currentCameraId = null;
+let cameras = [];
+let cameraIndex = 0;
 
 function beep(ok=true){
-
   const audio = new Audio(
-
     ok
-
     ? "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
-
     : "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
   );
-
   audio.play();
 }
 
+// =====================
+// START CAMERA
+// =====================
+function startCamera(cameraId){
+  if(qr.isScanning){
+    qr.stop().then(() => {
+      runCamera(cameraId);
+    });
+  } else {
+    runCamera(cameraId);
+  }
+}
+
+function runCamera(cameraId){
+  qr.start(
+    cameraId,
+    {
+      fps: 10,
+      qrbox: 250
+    },
+    onScanSuccess
+  );
+
+  currentCameraId = cameraId;
+}
+
+// =====================
+// QUÉT QR
+// =====================
 function onScanSuccess(text){
 
   if(!scanning) return;
-
   scanning = false;
 
-  result.innerHTML =
-    "⏳ Đang xử lý...";
+  result.innerHTML = "⏳ Đang xử lý...";
 
   fetch(
-
     "https://script.google.com/macros/s/AKfycbw1ZFWZgAa7f75uyzMVPgrY5xUdKnfdYZhvz_wNfakdYgG6j4Hbd284tTSyjYn-2yg/exec?mtn="
     + encodeURIComponent(text)
-
   )
-
   .then(r => r.json())
-
   .then(res => {
 
     if(res.success){
-
       beep(true);
-
       result.innerHTML =
-
-        "<div style='color:#00ff99'>"
-
-        + res.message +
-
-        "</div><br>" +
-
-        "<b>" +
-
-        res.name +
-
-        "</b><br>" +
-
+        "<div style='color:#00ff99'>" + res.message + "</div><br>" +
+        "<b>" + res.name + "</b><br>" +
         res.lop;
-
     } else {
-
       beep(false);
-
       result.innerHTML =
-
-        "<div style='color:#ff6666'>"
-
-        + res.message +
-
-        "</div>";
+        "<div style='color:#ff6666'>" + res.message + "</div>";
     }
 
     setTimeout(() => {
-
-      result.innerHTML =
-        "📷 Sẵn sàng quét";
-
+      result.innerHTML = "📷 Sẵn sàng quét";
       scanning = true;
-
     }, 2000);
 
   });
 
 }
 
-const qr =
-  new Html5Qrcode("reader");
-
+// =====================
+// CHỌN CAMERA + MẶC ĐỊNH
+// =====================
 Html5Qrcode.getCameras()
+.then(devs => {
+  cameras = devs;
 
-.then(devices => {
+  // mặc định: camera sau (thường là cuối danh sách)
+  cameraIndex = devs.length - 1;
 
-  console.log(devices);
-
-  // =========================
-  // CHỌN CAMERA CUỐI
-  // =========================
-
-  const cameraId =
-
-    devices[devices.length - 1].id;
-
-  qr.start(
-
-    cameraId,
-
-    {
-      fps: 10,
-      qrbox: 250
-    },
-
-    onScanSuccess
-  );
-
+  startCamera(devs[cameraIndex].id);
 });
+
+// =====================
+// NÚT ĐỔI CAMERA
+// =====================
+function switchCamera(){
+  if(cameras.length < 2){
+    alert("Thiết bị chỉ có 1 camera");
+    return;
+  }
+
+  cameraIndex = (cameraIndex + 1) % cameras.length;
+
+  startCamera(cameras[cameraIndex].id);
+
+  result.innerHTML = "🔄 Đang chuyển camera...";
+}
 
 </script>
 
 </body>
-
 </html>
