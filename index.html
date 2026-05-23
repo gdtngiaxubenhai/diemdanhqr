@@ -63,11 +63,16 @@ function saveQueue(){
 
 // ================== BEEP + VIBRATE ==================
 function beep(ok=true){
-  new Audio(
-    ok
-    ? "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
-    : "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
-  ).play();
+
+  try{
+
+    new Audio(
+      ok
+      ? "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+      : "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+    ).play().catch(()=>{});
+
+  }catch(e){}
 }
 
 function vibrate(){
