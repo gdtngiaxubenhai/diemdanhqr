@@ -14,9 +14,7 @@ body{
   margin:0;
 }
 
-h2{
-  margin:15px;
-}
+h2{ margin:15px; }
 
 #reader{
   width:100%;
@@ -24,14 +22,8 @@ h2{
 
 #result{
   padding:20px;
-  font-size:24px;
-  min-height:120px;
-}
-button{
-  padding:10px 14px;
-  margin:5px;
-  font-size:15px;
-  border-radius:8px;
+  font-size:22px;
+  min-height:100px;
 }
 </style>
 </head>
@@ -41,23 +33,21 @@ button{
 <h2>📷 Điểm Danh QR</h2>
 
 <div id="reader"></div>
-
 <div id="result">Đang mở camera...</div>
 
 <script>
 
 const result = document.getElementById("result");
 
-let qr = new Html5Qrcode("reader");
-
+let qr;
 let scanning = true;
+let cameras = [];
+let cameraId = null;
+
 let lastCode = "";
 let lastTime = 0;
 
-let cameras = [];
-let cameraIndex = 0;
-
-// ================== BEEP ==================
+// ================= BEEP =================
 function beep(ok=true){
   new Audio(
     ok
@@ -66,7 +56,7 @@ function beep(ok=true){
   ).play();
 }
 
-// ================== DUPLICATE ==================
+// ================= DUPLICATE =================
 function isDuplicate(code){
   const now = Date.now();
   if(code === lastCode && now - lastTime < 3000) return true;
@@ -75,38 +65,37 @@ function isDuplicate(code){
   return false;
 }
 
-// ================== START CAMERA ==================
-async function startCamera(id){
+// ================= START SCANNER SAFE =================
+function startScanner(id){
 
-  try{
-    if(qr.isScanning){
-      await qr.stop();
-      await qr.clear();
-    }
-
-    await qr.start(
-      id,
-      {
-        fps: 15,
-        qrbox: { width: 280, height: 280 },
-        aspectRatio: 1.0
-      },
-      onScan
-    );
-
-  }catch(e){
-    console.log(e);
-    result.innerHTML = "❌ Camera lỗi: " + e;
+  if(!qr){
+    qr = new Html5Qrcode("reader");
   }
+
+  qr.start(
+    id,
+    {
+      fps: 12,
+      qrbox: { width: 250, height: 250 },
+      aspectRatio: 1.0
+    },
+    onScan
+  ).then(() => {
+    result.innerHTML = "📷 Sẵn sàng quét";
+  }).catch(err => {
+    console.log(err);
+    result.innerHTML = "❌ Không mở được camera";
+  });
 }
 
-// ================== SCAN ==================
+// ================= SCAN =================
 function onScan(text){
 
   if(!scanning) return;
   if(isDuplicate(text)) return;
 
   scanning = false;
+
   result.innerHTML = "⏳ Đang xử lý...";
 
   fetch("https://script.google.com/macros/s/AKfycbw1ZFWZgAa7f75uyzMVPgrY5xUdKnfdYZhvz_wNfakdYgG6j4Hbd284tTSyjYn-2yg/exec?mtn=" + encodeURIComponent(text))
@@ -115,7 +104,8 @@ function onScan(text){
 
       beep(res.success);
 
-      result.innerHTML = res.success
+      result.innerHTML =
+        res.success
         ? "✅ " + res.message + "<br><b>" + res.name + "</b><br>" + res.lop
         : "❌ " + res.message;
 
@@ -126,45 +116,39 @@ function onScan(text){
 
     })
     .catch(err => {
-      result.innerHTML = "❌ Lỗi server: " + err;
+
+      console.log(err);
+
+      result.innerHTML = "❌ Lỗi server";
       beep(false);
 
-      setTimeout(() => {
-        scanning = true;
-      }, 1500);
+      setTimeout(() => scanning = true, 1500);
     });
 }
 
-// ================== INIT CAMERA ==================
+// ================= INIT CAMERA SAFE =================
 Html5Qrcode.getCameras().then(devs => {
 
   cameras = devs;
 
-  // ưu tiên camera sau
-  let back = devs.find(d =>
-    /back|rear|environment/i.test(d.label)
-  );
-
-  cameraIndex = back ? devs.indexOf(back) : devs.length - 1;
-
-  startCamera(cameras[cameraIndex].id);
-
-});
-
-// ================== SWITCH CAMERA (OPTIONAL) ==================
-function switchCamera(){
-
-  if(cameras.length < 2){
-    alert("Chỉ có 1 camera");
+  if(!devs || devs.length === 0){
+    result.innerHTML = "❌ Không tìm thấy camera";
     return;
   }
 
-  cameraIndex = (cameraIndex + 1) % cameras.length;
+  // ưu tiên camera sau
+  let back = devs.find(d =>
+    /back|rear|environment/i.test(d.label || "")
+  );
 
-  startCamera(cameras[cameraIndex].id);
+  cameraId = back ? back.id : devs[0].id;
 
-  result.innerHTML = "🔄 Đang đổi camera...";
-}
+  startScanner(cameraId);
+
+}).catch(err => {
+  console.log(err);
+  result.innerHTML = "❌ Không truy cập được camera";
+});
 
 </script>
 
