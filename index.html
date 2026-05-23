@@ -125,26 +125,32 @@ function onScan(text){
 // ================== SEND (ONLINE/OFFLINE) ==================
 function sendData(text){
 
-  fetch("https://script.google.com/macros/s/AKfycbyo9D1Wkg_cU0L4SFMcFnU3Zu1oXkyMJnFc7xRkGflq6TlQMdv0mh3JslKoDm2UvBKW/exec?mtn=" + encodeURIComponent(text))
-  .then(r => r.json())
-  .then(res => {
+   fetch(
+  "https://script.google.com/macros/s/AKfycbyo9D1Wkg_cU0L4SFMcFnU3Zu1oXkyMJnFc7xRkGflq6TlQMdv0mh3JslKoDm2UvBKW/exec?mtn="
+  + encodeURIComponent(text),
+  {
+    method: "GET",
+    mode: "cors"
+  }
+)
+.then(r => r.text())
+.then(t => {
 
-    handleResult(res);
+  console.log(t);
 
-  })
-  .catch(() => {
+  const res = JSON.parse(t);
 
-    // ❌ OFFLINE → lưu queue
-    offlineQueue.push(text);
-    saveQueue();
+  handleResult(res);
 
-    result.innerHTML = "📶 Mất mạng - đã lưu lại";
-    beep(false);
-    vibrate();
+})
+.catch(err => {
 
-    resetScan();
-  });
-}
+  console.log(err);
+
+  result.innerHTML =
+    "❌ " + err;
+
+});
 
 // ================== HANDLE RESULT ==================
 function handleResult(res){
