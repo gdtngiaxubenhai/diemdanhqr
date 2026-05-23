@@ -63,16 +63,11 @@ function saveQueue(){
 
 // ================== BEEP + VIBRATE ==================
 function beep(ok=true){
-
-  try{
-
-    new Audio(
-      ok
-      ? "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
-      : "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
-    ).play().catch(()=>{});
-
-  }catch(e){}
+  new Audio(
+    ok
+    ? "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+    : "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+  ).play();
 }
 
 function vibrate(){
@@ -130,32 +125,26 @@ function onScan(text){
 // ================== SEND (ONLINE/OFFLINE) ==================
 function sendData(text){
 
-   fetch(
-  "https://script.google.com/macros/s/AKfycbyo9D1Wkg_cU0L4SFMcFnU3Zu1oXkyMJnFc7xRkGflq6TlQMdv0mh3JslKoDm2UvBKW/exec?mtn="
-  + encodeURIComponent(text),
-  {
-    method: "GET",
-    mode: "cors"
-  }
-)
-.then(r => r.text())
-.then(t => {
+  fetch("https://script.google.com/macros/s/AKfycbyo9D1Wkg_cU0L4SFMcFnU3Zu1oXkyMJnFc7xRkGflq6TlQMdv0mh3JslKoDm2UvBKW/exec?mtn=" + encodeURIComponent(text))
+  .then(r => r.json())
+  .then(res => {
 
-  console.log(t);
+    handleResult(res);
 
-  const res = JSON.parse(t);
+  })
+  .catch(() => {
 
-  handleResult(res);
+    // ❌ OFFLINE → lưu queue
+    offlineQueue.push(text);
+    saveQueue();
 
-})
-.catch(err => {
+    result.innerHTML = "📶 Mất mạng - đã lưu lại";
+    beep(false);
+    vibrate();
 
-  console.log(err);
-
-  result.innerHTML =
-    "❌ " + err;
-
-});
+    resetScan();
+  });
+}
 
 // ================== HANDLE RESULT ==================
 function handleResult(res){
