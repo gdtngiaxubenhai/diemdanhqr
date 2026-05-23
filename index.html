@@ -11,18 +11,25 @@ body{
   background:#111;
   color:white;
   text-align:center;
+  margin:0;
 }
 
-#reader{ width:100%; }
+h2{
+  margin:15px;
+}
+
+#reader{
+  width:100%;
+}
 
 #result{
+  padding:20px;
   font-size:24px;
-  padding:15px;
+  min-height:120px;
 }
-
 button{
   padding:10px 14px;
-  margin:6px;
+  margin:5px;
   font-size:15px;
   border-radius:8px;
 }
@@ -31,13 +38,11 @@ button{
 
 <body>
 
-<h2>📷 QR Điểm Danh PRO</h2>
-
-<button onclick="switchCamera()">🔄 Camera</button>
-<button onclick="toggleFlash()">🔦 Flash</button>
+<h2>📷 Điểm Danh QR</h2>
 
 <div id="reader"></div>
-<div id="result">Sẵn sàng quét</div>
+
+<div id="result">Đang mở camera...</div>
 
 <script>
 
@@ -45,22 +50,12 @@ const result = document.getElementById("result");
 
 let qr = new Html5Qrcode("reader");
 
-console.log("ONLINE:", navigator.onLine);
-
-let cameras = [];
-let cameraIndex = 0;
-
 let scanning = true;
 let lastCode = "";
 let lastTime = 0;
 
-let flashOn = false;
-
-let offlineQueue = JSON.parse(localStorage.getItem("queue") || "[]");
-
-function saveQueue(){
-  localStorage.setItem("queue", JSON.stringify(offlineQueue));
-}
+let cameras = [];
+let cameraIndex = 0;
 
 // ================== BEEP ==================
 function beep(ok=true){
@@ -71,22 +66,16 @@ function beep(ok=true){
   ).play();
 }
 
-function vibrate(){
-  if(navigator.vibrate) navigator.vibrate(150);
-}
-
 // ================== DUPLICATE ==================
 function isDuplicate(code){
   const now = Date.now();
-  if(code === lastCode && now - lastTime < 3000){
-    return true;
-  }
+  if(code === lastCode && now - lastTime < 3000) return true;
   lastCode = code;
   lastTime = now;
   return false;
 }
 
-// ================== CAMERA START FIX ==================
+// ================== START CAMERA ==================
 async function startCamera(id){
 
   try{
@@ -102,22 +91,17 @@ async function startCamera(id){
         qrbox: { width: 280, height: 280 },
         aspectRatio: 1.0
       },
-      onScanSuccess
+      onScan
     );
-
-    setTimeout(() => {
-      const video = document.querySelector("video");
-      if(video) video.style.objectFit = "cover";
-    }, 500);
 
   }catch(e){
     console.log(e);
-    result.innerHTML = "❌ Camera lỗi";
+    result.innerHTML = "❌ Camera lỗi: " + e;
   }
 }
 
-// ================== SCAN FIX ==================
-function onScanSuccess(text){
+// ================== SCAN ==================
+function onScan(text){
 
   if(!scanning) return;
   if(isDuplicate(text)) return;
@@ -125,40 +109,30 @@ function onScanSuccess(text){
   scanning = false;
   result.innerHTML = "⏳ Đang xử lý...";
 
-  sendData(text);
-}
+  fetch("YOUR_SCRIPT_URL?mtn=" + encodeURIComponent(text))
+    .then(r => r.json())
+    .then(res => {
 
-// ================== SEND ==================
-function sendData(text){
+      beep(res.success);
 
-  const cleanText = text.trim();
+      result.innerHTML = res.success
+        ? "✅ " + res.message + "<br><b>" + res.name + "</b><br>" + res.lop
+        : "❌ " + res.message;
 
-  fetch("YOUR_SCRIPT_URL?mtn=" + encodeURIComponent(cleanText))
-  .then(async (r) => {
+      setTimeout(() => {
+        scanning = true;
+        result.innerHTML = "📷 Sẵn sàng quét";
+      }, 1500);
 
-    const raw = await r.text();
-    console.log("SERVER:", raw);
+    })
+    .catch(err => {
+      result.innerHTML = "❌ Lỗi server: " + err;
+      beep(false);
 
-    let data = JSON.parse(raw);
-    handleResult(data);
-
-  })
-  .catch(() => {
-
-    result.innerHTML = "❌ Lỗi server / dữ liệu QR";
-
-    beep(false);
-    vibrate();
-    resetScan();
-  });
-}
-
-// ================== RESET ==================
-function resetScan(){
-  setTimeout(() => {
-    scanning = true;
-    result.innerHTML = "📷 Sẵn sàng quét";
-  }, 1200);
+      setTimeout(() => {
+        scanning = true;
+      }, 1500);
+    });
 }
 
 // ================== INIT CAMERA ==================
@@ -166,6 +140,7 @@ Html5Qrcode.getCameras().then(devs => {
 
   cameras = devs;
 
+  // ưu tiên camera sau
   let back = devs.find(d =>
     /back|rear|environment/i.test(d.label)
   );
@@ -173,9 +148,10 @@ Html5Qrcode.getCameras().then(devs => {
   cameraIndex = back ? devs.indexOf(back) : devs.length - 1;
 
   startCamera(cameras[cameraIndex].id);
+
 });
 
-// ================== SWITCH CAMERA ==================
+// ================== SWITCH CAMERA (OPTIONAL) ==================
 function switchCamera(){
 
   if(cameras.length < 2){
@@ -188,30 +164,6 @@ function switchCamera(){
   startCamera(cameras[cameraIndex].id);
 
   result.innerHTML = "🔄 Đang đổi camera...";
-}
-
-// ================== FLASH ==================
-async function toggleFlash(){
-
-  try{
-    const track = qr.getRunningTrack?.();
-
-    if(!track){
-      alert("Chưa mở camera");
-      return;
-    }
-
-    flashOn = !flashOn;
-
-    await track.applyConstraints({
-      advanced: [{ torch: flashOn }]
-    });
-
-    result.innerHTML = flashOn ? "🔦 Flash ON" : "🔦 Flash OFF";
-
-  }catch(e){
-    alert("Thiết bị không hỗ trợ flash");
-  }
 }
 
 </script>
