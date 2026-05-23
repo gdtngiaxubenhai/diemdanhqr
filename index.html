@@ -11,133 +11,147 @@ body{
   background:#111;
   color:white;
   text-align:center;
-  margin:0;
 }
-
-h2{ margin:15px; }
 
 #reader{
   width:100%;
 }
 
 #result{
+  font-size:28px;
   padding:20px;
-  font-size:22px;
-  min-height:120px;
+}
+
+button{
+  padding:10px 15px;
+  margin:10px;
+  font-size:16px;
 }
 </style>
+
 </head>
 
 <body>
 
-<h2>📷 Điểm Danh QR</h2>
+<h1>📷 Điểm Danh QR</h1>
+
+<button onclick="switchCamera()">🔄 Đổi camera</button>
 
 <div id="reader"></div>
-<div id="result">🔄 Đang khởi động camera...</div>
+
+<div id="result">Sẵn sàng quét</div>
 
 <script>
 
 const result = document.getElementById("result");
 
-let qr = new Html5Qrcode("reader");
 let scanning = true;
-let cameraId = null;
+let qr = new Html5Qrcode("reader");
+let currentCameraId = null;
+let cameras = [];
+let cameraIndex = 0;
 
-// ================== BEEP ==================
 function beep(ok=true){
-  new Audio(
+  const audio = new Audio(
     ok
     ? "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
     : "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
-  ).play();
+  );
+  audio.play();
 }
 
-// ================== START CAMERA ==================
-function startScanner(id){
+// =====================
+// START CAMERA
+// =====================
+function startCamera(cameraId){
+  if(qr.isScanning){
+    qr.stop().then(() => {
+      runCamera(cameraId);
+    });
+  } else {
+    runCamera(cameraId);
+  }
+}
 
-  result.innerHTML = "📷 Đang mở camera...";
-
+function runCamera(cameraId){
   qr.start(
-    id,
+    cameraId,
     {
-      fps: 12,
-      qrbox: { width: 250, height: 250 },
-      aspectRatio: 1.0
+      fps: 10,
+      qrbox: 250
     },
-    onScan
-  )
-  .then(() => {
-    result.innerHTML = "📷 Sẵn sàng quét";
-  })
-  .catch(err => {
-    console.log(err);
-    result.innerHTML = "❌ Không mở được camera<br><small>" + err + "</small>";
-  });
+    onScanSuccess
+  );
+
+  currentCameraId = cameraId;
 }
 
-// ================== SCAN ==================
-function onScan(text){
+// =====================
+// QUÉT QR
+// =====================
+function onScanSuccess(text){
 
   if(!scanning) return;
-
   scanning = false;
+
   result.innerHTML = "⏳ Đang xử lý...";
 
-  fetch("https://script.google.com/macros/s/AKfycbw1ZFWZgAa7f75uyzMVPgrY5xUdKnfdYZhvz_wNfakdYgG6j4Hbd284tTSyjYn-2yg/exec?mtn=" + encodeURIComponent(text))
-    .then(r => r.json())
-    .then(res => {
+  fetch(
+    "https://script.google.com/macros/s/AKfycbw1ZFWZgAa7f75uyzMVPgrY5xUdKnfdYZhvz_wNfakdYgG6j4Hbd284tTSyjYn-2yg/exec?mtn="
+    + encodeURIComponent(text)
+  )
+  .then(r => r.json())
+  .then(res => {
 
-      beep(res.success);
-
-      result.innerHTML = res.success
-        ? "✅ " + res.message + "<br><b>" + res.name + "</b><br>" + res.lop
-        : "❌ " + res.message;
-
-      setTimeout(() => {
-        scanning = true;
-        result.innerHTML = "📷 Sẵn sàng quét";
-      }, 1500);
-
-    })
-    .catch(err => {
-
-      console.log(err);
-
-      result.innerHTML = "❌ Lỗi server";
+    if(res.success){
+      beep(true);
+      result.innerHTML =
+        "<div style='color:#00ff99'>" + res.message + "</div><br>" +
+        "<b>" + res.name + "</b><br>" +
+        res.lop;
+    } else {
       beep(false);
+      result.innerHTML =
+        "<div style='color:#ff6666'>" + res.message + "</div>";
+    }
 
-      setTimeout(() => scanning = true, 1500);
-    });
+    setTimeout(() => {
+      result.innerHTML = "📷 Sẵn sàng quét";
+      scanning = true;
+    }, 2000);
+
+  });
+
 }
 
-// ================== INIT CAMERA (FIX 100%) ==================
+// =====================
+// CHỌN CAMERA + MẶC ĐỊNH
+// =====================
 Html5Qrcode.getCameras()
 .then(devs => {
+  cameras = devs;
 
-  console.log("CAMERAS:", devs);
+  // mặc định: camera sau (thường là cuối danh sách)
+  cameraIndex = devs.length - 1;
 
-  if(!devs || devs.length === 0){
-    result.innerHTML = "❌ Không tìm thấy camera";
+  startCamera(devs[cameraIndex].id);
+});
+
+// =====================
+// NÚT ĐỔI CAMERA
+// =====================
+function switchCamera(){
+  if(cameras.length < 2){
+    alert("Thiết bị chỉ có 1 camera");
     return;
   }
 
-  // ưu tiên camera sau
-  let back = devs.find(d =>
-    /back|rear|environment/i.test(d.label || "")
-  );
+  cameraIndex = (cameraIndex + 1) % cameras.length;
 
-  cameraId = back ? back.id : devs[0].id;
+  startCamera(cameras[cameraIndex].id);
 
-  startScanner(cameraId);
-
-})
-.catch(err => {
-
-  console.log("CAM ERROR:", err);
-
-  result.innerHTML =
-    "❌ Không truy cập được camera<br><small>" + err + "</small>";
-});
+  result.innerHTML = "🔄 Đang chuyển camera...";
+}
 
 </script>
 
