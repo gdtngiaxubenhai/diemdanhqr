@@ -109,7 +109,7 @@ function onScan(text){
   scanning = false;
   result.innerHTML = "⏳ Đang xử lý...";
 
-  fetch("YOUR_SCRIPT_URL?mtn=" + encodeURIComponent(text))
+  fetch("https://script.google.com/macros/s/AKfycbw1ZFWZgAa7f75uyzMVPgrY5xUdKnfdYZhvz_wNfakdYgG6j4Hbd284tTSyjYn-2yg/exec?mtn=" + encodeURIComponent(text))
     .then(r => r.json())
     .then(res => {
 
