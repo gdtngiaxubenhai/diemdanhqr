@@ -125,7 +125,7 @@ function onScan(text){
 // ================== SEND (ONLINE/OFFLINE) ==================
 function sendData(text){
 
-  fetch("YOUR_SCRIPT_URL?mtn=" + encodeURIComponent(text))
+  fetch("https://script.google.com/macros/s/AKfycbyo9D1Wkg_cU0L4SFMcFnU3Zu1oXkyMJnFc7xRkGflq6TlQMdv0mh3JslKoDm2UvBKW/exec?mtn=" + encodeURIComponent(text))
   .then(r => r.json())
   .then(res => {
 
@@ -230,7 +230,7 @@ setInterval(() => {
   const item = offlineQueue.shift();
   saveQueue();
 
-  fetch("YOUR_SCRIPT_URL?mtn=" + encodeURIComponent(item));
+  fetch("https://script.google.com/macros/s/AKfycbyo9D1Wkg_cU0L4SFMcFnU3Zu1oXkyMJnFc7xRkGflq6TlQMdv0mh3JslKoDm2UvBKW/exec?mtn=" + encodeURIComponent(item));
 
 }, 5000);
 
