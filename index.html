@@ -125,20 +125,31 @@ function onScan(text){
 // ================== SEND (ONLINE/OFFLINE) ==================
 function sendData(text){
 
-  fetch("YOUR_SCRIPT_URL?mtn=" + encodeURIComponent(text))
-  .then(r => r.json())
-  .then(res => {
+  fetch("https://script.google.com/macros/s/AKfycbw1ZFWZgAa7f75uyzMVPgrY5xUdKnfdYZhvz_wNfakdYgG6j4Hbd284tTSyjYn-2yg/exec?mtn=" + encodeURIComponent(text))
+  .then(async (r) => {
 
-    handleResult(res);
+    // ⚠️ check HTTP error
+    if(!r.ok) throw new Error("HTTP error");
+
+    const data = await r.json();
+    handleResult(data);
 
   })
-  .catch(() => {
+  .catch((err) => {
 
-    // ❌ OFFLINE → lưu queue
-    offlineQueue.push(text);
-    saveQueue();
+    console.log("Fetch lỗi:", err);
 
-    result.innerHTML = "📶 Mất mạng - đã lưu lại";
+    // ❌ CHỈ OFFLINE KHI THẬT SỰ MẤT MẠNG
+    if(!navigator.onLine){
+      offlineQueue.push(text);
+      saveQueue();
+
+      result.innerHTML = "📶 Mất mạng thật - đã lưu lại";
+    } 
+    else {
+      result.innerHTML = "⚠️ Lỗi server hoặc kết nối";
+    }
+
     beep(false);
     vibrate();
 
