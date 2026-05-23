@@ -135,51 +135,19 @@ function onScanSuccess(text){
 const qr =
   new Html5Qrcode("reader");
 
-Html5Qrcode.getCameras()
+qr.start(
 
-.then(devices => {
+  {
+    facingMode: "environment"
+  },
 
-  // =========================
-  // ƯU TIÊN CAMERA SAU
-  // =========================
+  {
+    fps: 10,
+    qrbox: 250
+  },
 
-  const backCamera =
-
-    devices.find(device =>
-
-      device.label
-        .toLowerCase()
-        .includes("back")
-
-    )
-
-    ||
-
-    devices.find(device =>
-
-      device.label
-        .toLowerCase()
-        .includes("rear")
-
-    )
-
-    ||
-
-    devices[devices.length - 1];
-
-  qr.start(
-
-    backCamera.id,
-
-    {
-      fps:10,
-      qrbox:250
-    },
-
-    onScanSuccess
-  );
-
-});
+  onScanSuccess
+);
 
 </script>
 
