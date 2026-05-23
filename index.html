@@ -23,7 +23,7 @@ h2{ margin:15px; }
 #result{
   padding:20px;
   font-size:22px;
-  min-height:100px;
+  min-height:120px;
 }
 </style>
 </head>
@@ -33,21 +33,17 @@ h2{ margin:15px; }
 <h2>📷 Điểm Danh QR</h2>
 
 <div id="reader"></div>
-<div id="result">Đang mở camera...</div>
+<div id="result">🔄 Đang khởi động camera...</div>
 
 <script>
 
 const result = document.getElementById("result");
 
-let qr;
+let qr = new Html5Qrcode("reader");
 let scanning = true;
-let cameras = [];
 let cameraId = null;
 
-let lastCode = "";
-let lastTime = 0;
-
-// ================= BEEP =================
+// ================== BEEP ==================
 function beep(ok=true){
   new Audio(
     ok
@@ -56,21 +52,10 @@ function beep(ok=true){
   ).play();
 }
 
-// ================= DUPLICATE =================
-function isDuplicate(code){
-  const now = Date.now();
-  if(code === lastCode && now - lastTime < 3000) return true;
-  lastCode = code;
-  lastTime = now;
-  return false;
-}
-
-// ================= START SCANNER SAFE =================
+// ================== START CAMERA ==================
 function startScanner(id){
 
-  if(!qr){
-    qr = new Html5Qrcode("reader");
-  }
+  result.innerHTML = "📷 Đang mở camera...";
 
   qr.start(
     id,
@@ -80,22 +65,22 @@ function startScanner(id){
       aspectRatio: 1.0
     },
     onScan
-  ).then(() => {
+  )
+  .then(() => {
     result.innerHTML = "📷 Sẵn sàng quét";
-  }).catch(err => {
+  })
+  .catch(err => {
     console.log(err);
-    result.innerHTML = "❌ Không mở được camera";
+    result.innerHTML = "❌ Không mở được camera<br><small>" + err + "</small>";
   });
 }
 
-// ================= SCAN =================
+// ================== SCAN ==================
 function onScan(text){
 
   if(!scanning) return;
-  if(isDuplicate(text)) return;
 
   scanning = false;
-
   result.innerHTML = "⏳ Đang xử lý...";
 
   fetch("https://script.google.com/macros/s/AKfycbw1ZFWZgAa7f75uyzMVPgrY5xUdKnfdYZhvz_wNfakdYgG6j4Hbd284tTSyjYn-2yg/exec?mtn=" + encodeURIComponent(text))
@@ -104,8 +89,7 @@ function onScan(text){
 
       beep(res.success);
 
-      result.innerHTML =
-        res.success
+      result.innerHTML = res.success
         ? "✅ " + res.message + "<br><b>" + res.name + "</b><br>" + res.lop
         : "❌ " + res.message;
 
@@ -126,10 +110,11 @@ function onScan(text){
     });
 }
 
-// ================= INIT CAMERA SAFE =================
-Html5Qrcode.getCameras().then(devs => {
+// ================== INIT CAMERA (FIX 100%) ==================
+Html5Qrcode.getCameras()
+.then(devs => {
 
-  cameras = devs;
+  console.log("CAMERAS:", devs);
 
   if(!devs || devs.length === 0){
     result.innerHTML = "❌ Không tìm thấy camera";
@@ -145,9 +130,13 @@ Html5Qrcode.getCameras().then(devs => {
 
   startScanner(cameraId);
 
-}).catch(err => {
-  console.log(err);
-  result.innerHTML = "❌ Không truy cập được camera";
+})
+.catch(err => {
+
+  console.log("CAM ERROR:", err);
+
+  result.innerHTML =
+    "❌ Không truy cập được camera<br><small>" + err + "</small>";
 });
 
 </script>
