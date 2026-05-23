@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta name="viewport"
+   content="width=device-width, initial-scale=1">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+
+body{
+  font-family:Arial;
+  background:#111;
+  color:white;
+  text-align:center;
+}
+
+#reader{
+  width:100%;
+}
+
+#result{
+  font-size:28px;
+  padding:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>📷 Điểm Danh QR</h1>
+
+<div id="reader"></div>
+
+<div id="result">
+
+Sẵn sàng quét
+
+</div>
+
+<script>
+
+const result =
+  document.getElementById(
+    "result"
+  );
+
+let scanning = true;
+
+function beep(ok=true){
+
+  const audio = new Audio(
+
+    ok
+
+    ? "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+
+    : "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+  );
+
+  audio.play();
+}
+
+function onScanSuccess(text){
+
+  if(!scanning) return;
+
+  scanning = false;
+
+  result.innerHTML =
+    "⏳ Đang xử lý...";
+
+  fetch(
+
+    "https://script.google.com/macros/s/AKfycbw1ZFWZgAa7f75uyzMVPgrY5xUdKnfdYZhvz_wNfakdYgG6j4Hbd284tTSyjYn-2yg/exec?mtn="
+    + encodeURIComponent(text)
+
+  )
+
+  .then(r => r.json())
+
+  .then(res => {
+
+    if(res.success){
+
+      beep(true);
+
+      result.innerHTML =
+
+        "<div style='color:#00ff99'>"
+
+        + res.message +
+
+        "</div><br>" +
+
+        "<b>" +
+
+        res.name +
+
+        "</b><br>" +
+
+        res.lop;
+
+    } else {
+
+      beep(false);
+
+      result.innerHTML =
+
+        "<div style='color:#ff6666'>"
+
+        + res.message +
+
+        "</div>";
+    }
+
+    setTimeout(() => {
+
+      result.innerHTML =
+        "📷 Sẵn sàng quét";
+
+      scanning = true;
+
+    }, 2000);
+
+  });
+
+}
+
+const qr =
+  new Html5Qrcode("reader");
+
+Html5Qrcode.getCameras()
+
+.then(devices => {
+
+  qr.start(
+
+    devices[0].id,
+
+    {
+      fps:10,
+      qrbox:250
+    },
+
+    onScanSuccess
+  );
+
+});
+
+</script>
+
+</body>
+
+</html>
