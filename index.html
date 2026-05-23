@@ -95,20 +95,26 @@ async function startCamera(id){
     }
 
     await qr.start(
-      id,
-      {
-        fps: 12,        // ⚡ nhanh hơn
-        qrbox: 260
-      },
-      onScan
-    );
+  cameraId,
+  {
+    fps: 15,
+    qrbox: { width: 280, height: 280 },
+    aspectRatio: 1.0,
+    disableFlip: false,
+    videoConstraints: {
+      facingMode: "environment",
+      focusMode: "continuous"
+    }
+  },
+  onScan
+);
 
   }catch(e){
     console.log(e);
     result.innerHTML = "❌ Camera lỗi";
   }
 }
-
+document.querySelector("video").style.objectFit = "cover";
 // ================== SCAN ==================
 function onScan(text){
 
