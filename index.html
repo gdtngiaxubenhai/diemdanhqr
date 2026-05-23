@@ -135,19 +135,33 @@ function onScanSuccess(text){
 const qr =
   new Html5Qrcode("reader");
 
-qr.start(
+Html5Qrcode.getCameras()
 
-  {
-    facingMode: "environment"
-  },
+.then(devices => {
 
-  {
-    fps: 10,
-    qrbox: 250
-  },
+  console.log(devices);
 
-  onScanSuccess
-);
+  // =========================
+  // CHỌN CAMERA CUỐI
+  // =========================
+
+  const cameraId =
+
+    devices[devices.length - 1].id;
+
+  qr.start(
+
+    cameraId,
+
+    {
+      fps: 10,
+      qrbox: 250
+    },
+
+    onScanSuccess
+  );
+
+});
 
 </script>
 
