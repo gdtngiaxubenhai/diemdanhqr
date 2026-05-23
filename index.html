@@ -24,8 +24,9 @@ body{
 
 button{
   padding:10px 15px;
-  margin:10px;
+  margin:8px;
   font-size:16px;
+  border-radius:8px;
 }
 </style>
 
@@ -36,9 +37,9 @@ button{
 <h1>📷 Điểm Danh QR</h1>
 
 <button onclick="switchCamera()">🔄 Đổi camera</button>
+<button onclick="toggleFlash()">🔦 Flash</button>
 
 <div id="reader"></div>
-
 <div id="result">Sẵn sàng quét</div>
 
 <script>
@@ -47,10 +48,14 @@ const result = document.getElementById("result");
 
 let scanning = true;
 let qr = new Html5Qrcode("reader");
-let currentCameraId = null;
+
 let cameras = [];
 let cameraIndex = 0;
+let currentCameraId = null;
 
+let flashOn = false;
+
+// ================= BEep =================
 function beep(ok=true){
   const audio = new Audio(
     ok
@@ -60,25 +65,32 @@ function beep(ok=true){
   audio.play();
 }
 
-// =====================
-// START CAMERA
-// =====================
-function startCamera(cameraId){
-  if(qr.isScanning){
-    qr.stop().then(() => {
-      runCamera(cameraId);
-    });
-  } else {
-    runCamera(cameraId);
+// ================= Vibration =================
+function vibrate(){
+  if(navigator.vibrate){
+    navigator.vibrate(200);
   }
 }
 
-function runCamera(cameraId){
+// ================= START CAMERA =================
+function startCamera(cameraId){
+
+  if(qr.isScanning){
+    qr.stop().then(() => run(cameraId));
+  } else {
+    run(cameraId);
+  }
+}
+
+function run(cameraId){
   qr.start(
     cameraId,
     {
       fps: 10,
-      qrbox: 250
+      qrbox: 250,
+      videoConstraints: {
+        focusMode: "continuous"
+      }
     },
     onScanSuccess
   );
@@ -86,9 +98,7 @@ function runCamera(cameraId){
   currentCameraId = cameraId;
 }
 
-// =====================
-// QUÉT QR
-// =====================
+// ================= SCAN =================
 function onScanSuccess(text){
 
   if(!scanning) return;
@@ -102,6 +112,8 @@ function onScanSuccess(text){
   )
   .then(r => r.json())
   .then(res => {
+
+    vibrate();
 
     if(res.success){
       beep(true);
@@ -118,29 +130,35 @@ function onScanSuccess(text){
     setTimeout(() => {
       result.innerHTML = "📷 Sẵn sàng quét";
       scanning = true;
-    }, 2000);
+    }, 1500);
 
   });
-
 }
 
-// =====================
-// CHỌN CAMERA + MẶC ĐỊNH
-// =====================
-Html5Qrcode.getCameras()
-.then(devs => {
+// ================= LOAD CAMERA =================
+Html5Qrcode.getCameras().then(devs => {
+
   cameras = devs;
 
-  // mặc định: camera sau (thường là cuối danh sách)
-  cameraIndex = devs.length - 1;
+  // tìm camera sau (ưu tiên environment)
+  let backCam = devs.find(d =>
+    d.label.toLowerCase().includes("back") ||
+    d.label.toLowerCase().includes("rear") ||
+    d.label.toLowerCase().includes("environment")
+  );
+
+  if(backCam){
+    cameraIndex = devs.indexOf(backCam);
+  } else {
+    cameraIndex = devs.length - 1;
+  }
 
   startCamera(devs[cameraIndex].id);
 });
 
-// =====================
-// NÚT ĐỔI CAMERA
-// =====================
+// ================= SWITCH CAMERA =================
 function switchCamera(){
+
   if(cameras.length < 2){
     alert("Thiết bị chỉ có 1 camera");
     return;
@@ -151,6 +169,30 @@ function switchCamera(){
   startCamera(cameras[cameraIndex].id);
 
   result.innerHTML = "🔄 Đang chuyển camera...";
+}
+
+// ================= FLASH =================
+async function toggleFlash(){
+
+  try{
+    const track = qr.getRunningTrack?.();
+
+    if(!track){
+      alert("Camera chưa sẵn sàng");
+      return;
+    }
+
+    flashOn = !flashOn;
+
+    await track.applyConstraints({
+      advanced: [{torch: flashOn}]
+    });
+
+    result.innerHTML = flashOn ? "🔦 Flash BẬT" : "🔦 Flash TẮT";
+
+  }catch(e){
+    alert("Thiết bị không hỗ trợ flash");
+  }
 }
 
 </script>
