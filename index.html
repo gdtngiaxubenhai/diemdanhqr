@@ -123,7 +123,28 @@ function onScan(text){
 }
 
 // ================== SEND (ONLINE/OFFLINE) ==================
-sendData
+function sendData(text){
+
+  fetch("YOUR_SCRIPT_URL?mtn=" + encodeURIComponent(text))
+  .then(r => r.json())
+  .then(res => {
+
+    handleResult(res);
+
+  })
+  .catch(() => {
+
+    // ❌ OFFLINE → lưu queue
+    offlineQueue.push(text);
+    saveQueue();
+
+    result.innerHTML = "📶 Mất mạng - đã lưu lại";
+    beep(false);
+    vibrate();
+
+    resetScan();
+  });
+}
 
 // ================== HANDLE RESULT ==================
 function handleResult(res){
@@ -209,7 +230,7 @@ setInterval(() => {
   const item = offlineQueue.shift();
   saveQueue();
 
-  fetch("https://script.google.com/macros/s/AKfycbw1ZFWZgAa7f75uyzMVPgrY5xUdKnfdYZhvz_wNfakdYgG6j4Hbd284tTSyjYn-2yg/exec?mtn=" + encodeURIComponent(item));
+  fetch("YOUR_SCRIPT_URL?mtn=" + encodeURIComponent(item));
 
 }, 5000);
 
