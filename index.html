@@ -46,16 +46,14 @@ button{
 
 const result = document.getElementById("result");
 
-let scanning = true;
 let qr = new Html5Qrcode("reader");
 
 let cameras = [];
 let cameraIndex = 0;
 let currentCameraId = null;
+let scanning = true;
 
-let flashOn = false;
-
-// ================= BEep =================
+// ================== beep ==================
 function beep(ok=true){
   const audio = new Audio(
     ok
@@ -65,40 +63,38 @@ function beep(ok=true){
   audio.play();
 }
 
-// ================= Vibration =================
+// ================== vibrate ==================
 function vibrate(){
-  if(navigator.vibrate){
-    navigator.vibrate(200);
+  if(navigator.vibrate) navigator.vibrate(150);
+}
+
+// ================== START CAMERA SAFE ==================
+async function startCamera(cameraId){
+
+  try{
+    if(qr.isScanning){
+      await qr.stop();
+      await qr.clear();
+    }
+
+    await qr.start(
+      cameraId,
+      {
+        fps: 10,
+        qrbox: 250
+      },
+      onScanSuccess
+    );
+
+    currentCameraId = cameraId;
+
+  }catch(e){
+    console.log(e);
+    result.innerHTML = "❌ Lỗi camera";
   }
 }
 
-// ================= START CAMERA =================
-function startCamera(cameraId){
-
-  if(qr.isScanning){
-    qr.stop().then(() => run(cameraId));
-  } else {
-    run(cameraId);
-  }
-}
-
-function run(cameraId){
-  qr.start(
-    cameraId,
-    {
-      fps: 10,
-      qrbox: 250,
-      videoConstraints: {
-        focusMode: "continuous"
-      }
-    },
-    onScanSuccess
-  );
-
-  currentCameraId = cameraId;
-}
-
-// ================= SCAN =================
+// ================== SCAN ==================
 function onScanSuccess(text){
 
   if(!scanning) return;
@@ -106,61 +102,47 @@ function onScanSuccess(text){
 
   result.innerHTML = "⏳ Đang xử lý...";
 
-  fetch(
-    "https://script.google.com/macros/s/AKfycbw1ZFWZgAa7f75uyzMVPgrY5xUdKnfdYZhvz_wNfakdYgG6j4Hbd284tTSyjYn-2yg/exec?mtn="
-    + encodeURIComponent(text)
-  )
+  fetch("YOUR_SCRIPT_URL?mtn=" + encodeURIComponent(text))
   .then(r => r.json())
   .then(res => {
 
     vibrate();
 
-    if(res.success){
-      beep(true);
-      result.innerHTML =
-        "<div style='color:#00ff99'>" + res.message + "</div><br>" +
-        "<b>" + res.name + "</b><br>" +
-        res.lop;
-    } else {
-      beep(false);
-      result.innerHTML =
-        "<div style='color:#ff6666'>" + res.message + "</div>";
-    }
+    beep(res.success);
+
+    result.innerHTML =
+      res.success
+      ? `<div style="color:#00ff99">${res.message}</div><b>${res.name}</b><br>${res.lop}`
+      : `<div style="color:#ff6666">${res.message}</div>`;
 
     setTimeout(() => {
-      result.innerHTML = "📷 Sẵn sàng quét";
       scanning = true;
+      result.innerHTML = "📷 Sẵn sàng quét";
     }, 1500);
 
   });
 }
 
-// ================= LOAD CAMERA =================
+// ================== LOAD CAMERA ==================
 Html5Qrcode.getCameras().then(devs => {
 
   cameras = devs;
 
-  // tìm camera sau (ưu tiên environment)
-  let backCam = devs.find(d =>
-    d.label.toLowerCase().includes("back") ||
-    d.label.toLowerCase().includes("rear") ||
-    d.label.toLowerCase().includes("environment")
+  // ưu tiên camera sau
+  let back = devs.find(d =>
+    /back|rear|environment/i.test(d.label)
   );
 
-  if(backCam){
-    cameraIndex = devs.indexOf(backCam);
-  } else {
-    cameraIndex = devs.length - 1;
-  }
+  cameraIndex = back ? devs.indexOf(back) : devs.length - 1;
 
   startCamera(devs[cameraIndex].id);
 });
 
-// ================= SWITCH CAMERA =================
+// ================== SWITCH CAMERA FIX ==================
 function switchCamera(){
 
   if(cameras.length < 2){
-    alert("Thiết bị chỉ có 1 camera");
+    alert("Chỉ có 1 camera");
     return;
   }
 
@@ -168,32 +150,10 @@ function switchCamera(){
 
   startCamera(cameras[cameraIndex].id);
 
-  result.innerHTML = "🔄 Đang chuyển camera...";
+  result.innerHTML = "🔄 Đang đổi camera...";
 }
 
-// ================= FLASH =================
-async function toggleFlash(){
-
-  try{
-    const track = qr.getRunningTrack?.();
-
-    if(!track){
-      alert("Camera chưa sẵn sàng");
-      return;
-    }
-
-    flashOn = !flashOn;
-
-    await track.applyConstraints({
-      advanced: [{torch: flashOn}]
-    });
-
-    result.innerHTML = flashOn ? "🔦 Flash BẬT" : "🔦 Flash TẮT";
-
-  }catch(e){
-    alert("Thiết bị không hỗ trợ flash");
-  }
-}
+</script>
 
 </script>
 
