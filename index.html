@@ -249,8 +249,7 @@ async function startCamera(id){
       id,
 
       {
-
-        fps:20,
+        fps: 20,
 
         qrbox:{
           width:300,
@@ -258,10 +257,6 @@ async function startCamera(id){
         },
 
         aspectRatio:1.777778,
-
-        videoConstraints:{
-          facingMode:"environment"
-        },
 
         formatsToSupport:[
 
@@ -284,11 +279,13 @@ async function startCamera(id){
 
   }catch(e){
 
-    console.log(e);
+    console.log("CAMERA ERROR:", e);
 
-    result.innerHTML = "❌ Camera lỗi";
+    result.innerHTML =
+      "❌ Camera lỗi: " + e;
   }
-}================== SCAN ==================
+}
+  ================== SCAN ==================
 function onScan(text){
 
   if(!scanning) return;
