@@ -136,8 +136,6 @@ let soundEnabled = false;
 
  // alert("✅ Đã bật âm thanh & rung");
 //}
-  let soundEnabled = false;
-
 document.body.addEventListener(
   "touchstart",
   () => {
@@ -168,13 +166,10 @@ function beep(ok=true){
     ? successAudio
     : errorAudio;
 
-  audio.pause();
-
   audio.currentTime = 0;
 
   audio.play()
   .catch(err=>{
-
     console.log(err);
   });
 }
@@ -263,9 +258,7 @@ async function startCamera(id){
         aspectRatio:1.777778,
 
         videoConstraints:{
-          facingMode:{
-            exact:"environment"
-          }
+          facingMode:environment"          
         },
 
         formatsToSupport:[
