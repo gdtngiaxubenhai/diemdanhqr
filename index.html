@@ -142,13 +142,31 @@ document.body.addEventListener(
 
     soundEnabled = true;
 
+    successAudio.play()
+    .then(() => {
+
+      successAudio.pause();
+      successAudio.currentTime = 0;
+
+    })
+    .catch(()=>{});
+
+    errorAudio.play()
+    .then(() => {
+
+      errorAudio.pause();
+      errorAudio.currentTime = 0;
+
+    })
+    .catch(()=>{});
+
     if(navigator.vibrate){
       navigator.vibrate(50);
     }
 
   },
   { once:true }
-);
+);  
 // ================== OFFLINE QUEUE ==================
 let offlineQueue = JSON.parse(localStorage.getItem("queue") || "[]");
 
@@ -165,6 +183,8 @@ function beep(ok=true){
     ok
     ? successAudio
     : errorAudio;
+
+  audio.pause();
 
   audio.currentTime = 0;
 
@@ -228,7 +248,7 @@ function isDuplicate(code){
 // ================== START CAMERA ==================
 let cameraStarting = false;
 
-async function startCamera(id){
+async function startCamera(){
 
   if(cameraStarting) return;
 
@@ -245,39 +265,18 @@ async function startCamera(id){
     }
 
     await qr.start(
-
-      id,
-
+    
+      { facingMode: "environment" },
+    
       {
         fps:15,
-
+    
         qrbox:{
           width:250,
           height:250
-        },
-
-        aspectRatio:1,
-
-        videoConstraints:{
-          facingMode:"environment"
-        },
-
-        formatsToSupport:[
-
-          Html5QrcodeSupportedFormats.QR_CODE,
-
-          Html5QrcodeSupportedFormats.CODE_128,
-
-          Html5QrcodeSupportedFormats.EAN_13,
-
-          Html5QrcodeSupportedFormats.EAN_8,
-
-          Html5QrcodeSupportedFormats.UPC_A,
-
-          Html5QrcodeSupportedFormats.UPC_E
-        ]
+        }
       },
-
+    
       onScan
     );
 
@@ -433,7 +432,7 @@ Html5Qrcode.getCameras()
     ? devs.indexOf(back)
     : 0;
 
-  startCamera(cameras[cameraIndex].id);
+  startCamera();
 
 })
 
