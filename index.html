@@ -56,14 +56,30 @@ button{
   box-shadow:0 0 30px #000;
 }
 
-.popup-success{
+#popup.popup-success{
   border:3px solid #00ff99;
   color:#00ff99;
 }
 
-.popup-error{
+#popup.popup-error{
   border:3px solid #ff4444;
   color:#ff4444;
+}
+  #popup.show{
+  animation:pop 0.2s ease;
+}
+
+@keyframes pop{
+
+  from{
+    transform:translate(-50%,-50%) scale(0.7);
+    opacity:0;
+  }
+
+  to{
+    transform:translate(-50%,-50%) scale(1);
+    opacity:1;
+  }
 }
 </style>
 </head>
@@ -188,11 +204,15 @@ function showPopup(html, ok=true){
   popup.style.display = "block";
 
   popup.className =
-    ok
-    ? "popup-success"
-    : "popup-error";
+  ok
+  ? "popup-success"
+  : "popup-error";
 
-  popup.id = "popup";
+popup.classList.remove("show");
+
+void popup.offsetWidth;
+
+popup.classList.add("show");
 
   popup.innerHTML = html;
 }
@@ -215,26 +235,66 @@ function isDuplicate(code){
 // ================== START CAMERA ==================
 async function startCamera(id){
 
-  try{
-    if(qr.isScanning){
-      await qr.stop();
-      await qr.clear();
-    }
+try{
 
-    await qr.start(
-      id,
-      {
-        fps: 12,        // ⚡ nhanh hơn
-        qrbox: 260
-      },
-      onScan
-    );
+```
+if(qr.isScanning){
 
-  }catch(e){
-    console.log(e);
-    result.innerHTML = "❌ Camera lỗi";
-  }
+  await qr.stop();
+
+  await qr.clear();
 }
+
+await qr.start(
+
+  id,
+
+  {
+
+    fps:20,
+
+    qrbox:{
+      width:300,
+      height:180
+    },
+
+    aspectRatio:1.777778,
+
+    videoConstraints:{
+      facingMode:"environment"
+    },
+
+    formatsToSupport:[
+
+      Html5QrcodeSupportedFormats.QR_CODE,
+
+      Html5QrcodeSupportedFormats.CODE_128,
+
+      Html5QrcodeSupportedFormats.EAN_13,
+
+      Html5QrcodeSupportedFormats.EAN_8,
+
+      Html5QrcodeSupportedFormats.UPC_A,
+
+      Html5QrcodeSupportedFormats.UPC_E
+    ]
+  },
+
+  onScan
+);
+```
+
+}catch(e){
+
+```
+console.log(e);
+
+result.innerHTML = "❌ Camera lỗi";
+```
+
+}
+}
+
 
 // ================== SCAN ==================
 function onScan(text){
@@ -406,7 +466,10 @@ function switchCamera(){
 async function toggleFlash(){
 
   try{
-    const track = qr.getRunningTrack?.();
+    const track =
+  qr.getRunningTrack
+  ? qr.getRunningTrack()
+  : null;
 
     if(!track){
       alert("Chưa mở camera");
