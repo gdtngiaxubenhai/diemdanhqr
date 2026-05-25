@@ -225,6 +225,7 @@ function isDuplicate(code){
 }
 
 // ================== START CAMERA ==================
+// ================== START CAMERA ==================
 let cameraStarting = false;
 
 async function startCamera(id){
@@ -235,30 +236,30 @@ async function startCamera(id){
 
   try{
 
-    try{
-      await qr.stop();
-    }catch(e){}
+    // chỉ stop khi đang scan
+    if(qr.isScanning){
 
-    try{
+      await qr.stop();
+
       await qr.clear();
-    }catch(e){}
+    }
 
     await qr.start(
 
       id,
 
       {
-        fps: 20,
+        fps:15,
 
         qrbox:{
-          width:300,
-          height:180
+          width:250,
+          height:250
         },
 
-        aspectRatio:1.777778,
+        aspectRatio:1,
 
         videoConstraints:{
-          facingMode:environment"          
+          facingMode:"environment"
         },
 
         formatsToSupport:[
@@ -287,7 +288,7 @@ async function startCamera(id){
     console.log(e);
 
     result.innerHTML =
-      "❌ Camera lỗi: " + e;
+      "❌ Camera lỗi";
 
   }finally{
 
