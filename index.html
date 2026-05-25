@@ -26,6 +26,45 @@ button{
   font-size:15px;
   border-radius:8px;
 }
+  #popup{
+
+  position:fixed;
+
+  top:50%;
+  left:50%;
+
+  transform:translate(-50%,-50%);
+
+  background:#111;
+
+  color:white;
+
+  padding:30px;
+
+  border-radius:20px;
+
+  width:85%;
+
+  z-index:9999;
+
+  font-size:28px;
+
+  font-weight:bold;
+
+  display:none;
+
+  box-shadow:0 0 30px #000;
+}
+
+.popup-success{
+  border:3px solid #00ff99;
+  color:#00ff99;
+}
+
+.popup-error{
+  border:3px solid #ff4444;
+  color:#ff4444;
+}
 </style>
 </head>
 
@@ -38,11 +77,24 @@ button{
 
 <div id="reader"></div>
 <div id="result">Sẵn sàng quét</div>
-
+<div id="popup"></div>
 <script>
 
 const result = document.getElementById("result");
+const popup =
+  document.getElementById("popup");
 
+const successAudio = new Audio(
+  "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+);
+
+const errorAudio = new Audio(
+  "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+);
+
+// preload
+successAudio.load();
+errorAudio.load();
 let qr = new Html5Qrcode("reader");
 
 let cameras = [];
@@ -63,17 +115,56 @@ function saveQueue(){
 
 // ================== BEEP + VIBRATE ==================
 function beep(ok=true){
-  new Audio(
+
+  const audio =
     ok
-    ? "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
-    : "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
-  ).play();
+    ? successAudio
+    : errorAudio;
+
+  audio.pause();
+
+  audio.currentTime = 0;
+
+  const p = audio.play();
+
+  if(p !== undefined){
+
+    p.catch(()=>{});
+  }
 }
 
-function vibrate(){
-  if(navigator.vibrate) navigator.vibrate(150);
+function vibrate(ok=true){
+
+  if(!navigator.vibrate) return;
+
+  if(ok){
+
+    navigator.vibrate([200,80,200]);
+
+  }else{
+
+    navigator.vibrate([100,80,100]);
+  }
+}
+  
+function showPopup(html, ok=true){
+
+  popup.style.display = "block";
+
+  popup.className =
+    ok
+    ? "popup-success"
+    : "popup-error";
+
+  popup.id = "popup";
+
+  popup.innerHTML = html;
 }
 
+function hidePopup(){
+
+  popup.style.display = "none";
+}
 // ================== DUPLICATE FILTER ==================
 function isDuplicate(code){
   const now = Date.now();
@@ -150,23 +241,101 @@ function sendData(text){
 function handleResult(res){
 
   beep(res.success);
-  vibrate();
 
-  result.innerHTML = res.success
-    ? `✅ ${res.message}<br><b>${res.name}</b><br>${res.lop}`
-    : `❌ ${res.message}`;
+  vibrate(res.success);
+
+  if(res.success){
+
+    result.innerHTML =
+      `
+      ✅ ${res.message}
+      `;
+
+    showPopup(
+      `
+      ✅ ${res.message}
+
+      <br><br>
+
+      👤 ${res.name}
+
+      <br>
+
+      🏫 ${res.lop}
+      `,
+      true
+    );
+
+    document.body.style.background =
+      "#063";
+
+  }else{
+
+    result.innerHTML =
+      `
+      ❌ ${res.message}
+      `;
+
+    showPopup(
+      `
+      ❌ ${res.message}
+      `,
+      false
+    );
+
+    document.body.style.background =
+      "#500";
+  }
+
+  setTimeout(()=>{
+
+    document.body.style.background =
+      "#111";
+
+  },200);
 
   resetScan();
 }
 
 // ================== RESET ==================
 function resetScan(){
-  setTimeout(() => {
-    scanning = true;
-    result.innerHTML = "📷 Sẵn sàng quét";
-  }, 1200);
-}
 
+  setTimeout(() => {
+
+    hidePopup();
+
+    scanning = true;
+
+    result.innerHTML =
+      "📷 Sẵn sàng quét";
+
+  }, 3000);
+}
+document.body.addEventListener(
+  "click",
+  () => {
+
+    successAudio.play()
+    .then(()=>{
+
+      successAudio.pause();
+
+      successAudio.currentTime = 0;
+
+    }).catch(()=>{});
+
+    errorAudio.play()
+    .then(()=>{
+
+      errorAudio.pause();
+
+      errorAudio.currentTime = 0;
+
+    }).catch(()=>{});
+
+  },
+  { once:true }
+);
 // ================== CAMERA INIT (AUTO BACK CAMERA) ==================
 Html5Qrcode.getCameras().then(devs => {
 
