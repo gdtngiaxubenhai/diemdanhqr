@@ -124,39 +124,35 @@ let lastTime = 0;
 
 let flashOn = false;
 let soundEnabled = false;
-  function enableSound(){
+  //function enableSound(){
 
-  successAudio.volume = 1;
-  errorAudio.volume = 1;
+ // soundEnabled = true;
 
-  successAudio.play()
-  .then(()=>{
+  // test rung
+ // if(navigator.vibrate){
+ //   navigator.vibrate([200,100,200]);
+//  }
 
-    successAudio.pause();
+//  result.innerHTML =
+  //  "🔊 Âm thanh đã bật";
 
-    successAudio.currentTime = 0;
+ // alert("✅ Đã bật âm thanh & rung");
+//}
+  let soundEnabled = false;
+
+document.body.addEventListener(
+  "touchstart",
+  () => {
 
     soundEnabled = true;
 
-  });
+    if(navigator.vibrate){
+      navigator.vibrate(50);
+    }
 
-  errorAudio.play()
-  .then(()=>{
-
-    errorAudio.pause();
-
-    errorAudio.currentTime = 0;
-
-  });
-
-  // test rung
-  if(navigator.vibrate){
-
-    navigator.vibrate([200,100,200]);
-  }
-
-  alert("✅ Đã bật âm thanh & rung");
-}
+  },
+  { once:true }
+);
 // ================== OFFLINE QUEUE ==================
 let offlineQueue = JSON.parse(localStorage.getItem("queue") || "[]");
 
@@ -418,31 +414,7 @@ function resetScan(){
 
   }, 3000);
 }
-document.body.addEventListener(
-  "click",
-  () => {
 
-    successAudio.play()
-    .then(()=>{
-
-      successAudio.pause();
-
-      successAudio.currentTime = 0;
-
-    }).catch(()=>{});
-
-    errorAudio.play()
-    .then(()=>{
-
-      errorAudio.pause();
-
-      errorAudio.currentTime = 0;
-
-    }).catch(()=>{});
-
-  },
-  { once:true }
-);
 // ================== CAMERA INIT (AUTO BACK CAMERA) ==================
 Html5Qrcode.getCameras()
 
@@ -536,23 +508,6 @@ setInterval(() => {
 
 }, 5000);
 
-Html5Qrcode.getCameras().then(devs => {
-
-  console.log("DEVICES:", devs);
-
-  cameras = devs;
-
-  let back = devs.find(d =>
-    /back|rear|environment/i.test(d.label)
-  );
-
-  cameraIndex = back
-    ? devs.indexOf(back)
-    : devs.length - 1;
-
-  startCamera(cameras[cameraIndex].id);
-
-});
 </script>
 
 </body>
