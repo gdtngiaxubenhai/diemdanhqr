@@ -494,6 +494,23 @@ setInterval(() => {
 
 }, 5000);
 
+Html5Qrcode.getCameras().then(devs => {
+
+  console.log("DEVICES:", devs);
+
+  cameras = devs;
+
+  let back = devs.find(d =>
+    /back|rear|environment/i.test(d.label)
+  );
+
+  cameraIndex = back
+    ? devs.indexOf(back)
+    : devs.length - 1;
+
+  startCamera(cameras[cameraIndex].id);
+
+});
 </script>
 
 </body>
