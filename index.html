@@ -235,68 +235,60 @@ function isDuplicate(code){
 // ================== START CAMERA ==================
 async function startCamera(id){
 
-try{
+  try{
 
-```
-if(qr.isScanning){
+    if(qr.isScanning){
 
-  await qr.stop();
+      await qr.stop();
 
-  await qr.clear();
-}
+      await qr.clear();
+    }
 
-await qr.start(
+    await qr.start(
 
-  id,
+      id,
 
-  {
+      {
 
-    fps:20,
+        fps:20,
 
-    qrbox:{
-      width:300,
-      height:180
-    },
+        qrbox:{
+          width:300,
+          height:180
+        },
 
-    aspectRatio:1.777778,
+        aspectRatio:1.777778,
 
-    videoConstraints:{
-      facingMode:"environment"
-    },
+        videoConstraints:{
+          facingMode:"environment"
+        },
 
-    formatsToSupport:[
+        formatsToSupport:[
 
-      Html5QrcodeSupportedFormats.QR_CODE,
+          Html5QrcodeSupportedFormats.QR_CODE,
 
-      Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_128,
 
-      Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_13,
 
-      Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.EAN_8,
 
-      Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_A,
 
-      Html5QrcodeSupportedFormats.UPC_E
-    ]
-  },
+          Html5QrcodeSupportedFormats.UPC_E
+        ]
+      },
 
-  onScan
-);
-```
+      onScan
+    );
 
-}catch(e){
+  }catch(e){
 
-```
-console.log(e);
+    console.log(e);
 
-result.innerHTML = "❌ Camera lỗi";
-```
-
-}
-}
-
-
-// ================== SCAN ==================
+    result.innerHTML = "❌ Camera lỗi";
+  }
+}================== SCAN ==================
 function onScan(text){
 
   if(!scanning) return;
