@@ -140,8 +140,8 @@ function unlockAudio(){
 
   soundEnabled = true;
 
-  successAudio.volume = 1;
-  errorAudio.volume = 1;
+  successAudio.muted = false;
+  errorAudio.muted = false;
 
   successAudio.play()
   .then(() => {
@@ -192,18 +192,21 @@ function saveQueue(){
 // ================== BEEP + VIBRATE ==================
 function beep(ok=true){
 
-function vibrate(ok=true){
+  if(!soundEnabled) return;
 
-  if(!navigator.vibrate) return;
+  const audio =
+    ok
+    ? successAudio
+    : errorAudio;
 
-  if(ok){
+  audio.pause();
 
-    navigator.vibrate([250,100,250]);
+  audio.currentTime = 0;
 
-  }else{
-
-    navigator.vibrate([100,50,100]);
-  }
+  audio.play()
+  .catch(err=>{
+    console.log("BEEP:", err);
+  });
 }
   
 function showPopup(html, ok=true){
@@ -254,27 +257,27 @@ async function startCamera(){
 
   try{
 
-    // chỉ stop khi đang scan
     if(qr.isScanning){
 
       await qr.stop();
-
       await qr.clear();
     }
 
     await qr.start(
-    
-      { facingMode: "environment" },
-    
+
       {
-        fps:15,
-    
+        facingMode: "environment"
+      },
+
+      {
+        fps:10,
+
         qrbox:{
           width:250,
           height:250
         }
       },
-    
+
       onScan
     );
 
@@ -282,10 +285,44 @@ async function startCamera(){
 
   }catch(e){
 
-    console.log(e);
+    console.log("CAMERA ERROR:", e);
 
-    result.innerHTML =
-      "❌ Camera lỗi";
+    // fallback cho Chrome Android
+    try{
+
+      const devices =
+        await Html5Qrcode.getCameras();
+
+      if(devices.length){
+
+        await qr.start(
+
+          devices[0].id,
+
+          {
+            fps:10,
+
+            qrbox:{
+              width:250,
+              height:250
+            }
+          },
+
+          onScan
+        );
+
+        result.innerHTML =
+          "📷 Sẵn sàng quét";
+
+      }
+
+    }catch(err){
+
+      console.log(err);
+
+      result.innerHTML =
+        "❌ Không mở được camera";
+    }
 
   }finally{
 
@@ -452,7 +489,7 @@ function switchCamera(){
 
   cameraIndex = (cameraIndex + 1) % cameras.length;
 
-  startCamera(cameras[cameraIndex].id);
+ startCamera();
 
   result.innerHTML = "🔄 Đang đổi camera...";
 }
