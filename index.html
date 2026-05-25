@@ -203,16 +203,19 @@ function showPopup(html, ok=true){
 
   popup.style.display = "block";
 
-  popup.className =
-  ok
-  ? "popup-success"
-  : "popup-error";
+  popup.className = "";
 
-popup.classList.remove("show");
+  popup.classList.add(
+    ok
+    ? "popup-success"
+    : "popup-error"
+  );
 
-void popup.offsetWidth;
+  popup.classList.remove("show");
 
-popup.classList.add("show");
+  void popup.offsetWidth;
+
+  popup.classList.add("show");
 
   popup.innerHTML = html;
 }
@@ -285,7 +288,7 @@ async function startCamera(id){
       "❌ Camera lỗi: " + e;
   }
 }
-  ================== SCAN ==================
+  //================== SCAN ==================
 function onScan(text){
 
   if(!scanning) return;
