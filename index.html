@@ -426,7 +426,7 @@ document.body.addEventListener(
 );
 // ================== CAMERA INIT (AUTO BACK CAMERA) ==================
 Html5Qrcode.getCameras().then(devs => {
-
+  console.log(devs);
   cameras = devs;
 
   // ưu tiên camera sau
