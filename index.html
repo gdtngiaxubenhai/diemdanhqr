@@ -71,7 +71,9 @@ button{
 <body>
 
 <h2>📷 QR Điểm Danh PRO</h2>
-
+<button onclick="enableSound()">
+🔊 Bật âm thanh
+</button>
 <button onclick="switchCamera()">🔄 Camera</button>
 <button onclick="toggleFlash()">🔦 Flash</button>
 
@@ -105,7 +107,40 @@ let lastCode = "";
 let lastTime = 0;
 
 let flashOn = false;
+let flashOn = false;
+  function enableSound(){
 
+  successAudio.volume = 1;
+  errorAudio.volume = 1;
+
+  successAudio.play()
+  .then(()=>{
+
+    successAudio.pause();
+
+    successAudio.currentTime = 0;
+
+    soundEnabled = true;
+
+  });
+
+  errorAudio.play()
+  .then(()=>{
+
+    errorAudio.pause();
+
+    errorAudio.currentTime = 0;
+
+  });
+
+  // test rung
+  if(navigator.vibrate){
+
+    navigator.vibrate([200,100,200]);
+  }
+
+  alert("✅ Đã bật âm thanh & rung");
+}
 // ================== OFFLINE QUEUE ==================
 let offlineQueue = JSON.parse(localStorage.getItem("queue") || "[]");
 
@@ -116,6 +151,8 @@ function saveQueue(){
 // ================== BEEP + VIBRATE ==================
 function beep(ok=true){
 
+  if(!soundEnabled) return;
+
   const audio =
     ok
     ? successAudio
@@ -125,12 +162,11 @@ function beep(ok=true){
 
   audio.currentTime = 0;
 
-  const p = audio.play();
+  audio.play()
+  .catch(err=>{
 
-  if(p !== undefined){
-
-    p.catch(()=>{});
-  }
+    console.log(err);
+  });
 }
 
 function vibrate(ok=true){
@@ -139,11 +175,11 @@ function vibrate(ok=true){
 
   if(ok){
 
-    navigator.vibrate([200,80,200]);
+    navigator.vibrate([250,100,250]);
 
   }else{
 
-    navigator.vibrate([100,80,100]);
+    navigator.vibrate([100,50,100]);
   }
 }
   
