@@ -21,6 +21,10 @@ h2{
 
 #reader{
   width:100%;
+  position:relative;
+  overflow:hidden;
+  border-radius:20px;
+  background:#000;
 }
 
 #result{
@@ -81,7 +85,106 @@ button{
     opacity:1;
   }
 }
+.scan-box{
 
+  position:absolute;
+
+  top:50%;
+  left:50%;
+
+  transform:translate(-50%,-50%);
+
+  width:85%;
+  height:180px;
+
+  border:3px solid rgba(255,255,255,0.25);
+
+  border-radius:20px;
+
+  z-index:999;
+  pointer-events:none;
+}
+
+
+/* 4 góc */
+
+.scan-box::before,
+.scan-box::after{
+
+  content:"";
+
+  position:absolute;
+
+  width:40px;
+  height:40px;
+
+  border-color:#00ff99;
+
+  border-style:solid;
+}
+
+.scan-box::before{
+
+  top:-3px;
+  left:-3px;
+
+  border-width:4px 0 0 4px;
+
+  border-radius:20px 0 0 0;
+}
+
+.scan-box::after{
+
+  bottom:-3px;
+  right:-3px;
+
+  border-width:0 4px 4px 0;
+
+  border-radius:0 0 20px 0;
+}
+
+
+/* laser đỏ */
+
+.scan-line{
+
+  position:absolute;
+
+  left:50%;
+
+  top:50%;
+
+  transform:translateX(-50%);
+
+  width:82%;
+  height:3px;
+
+  background:red;
+
+  box-shadow:
+    0 0 10px red,
+    0 0 20px red;
+
+  z-index:1000;
+
+  animation:laser 2s linear infinite;
+}
+
+
+@keyframes laser{
+
+  0%{
+    top:20%;
+  }
+
+  50%{
+    top:75%;
+  }
+
+  100%{
+    top:20%;
+  }
+}
 </style>
 </head>
 
@@ -101,7 +204,13 @@ button{
 🔦 Flash
 </button>
 
-<div id="reader"></div>
+<div id="reader">
+
+  <div class="scan-box"></div>
+
+  <div class="scan-line"></div>
+
+</div>
 
 <div id="result">
 📷 Sẵn sàng quét
@@ -208,7 +317,10 @@ function hidePopup(){
   popup.style.display = "none";
 }
 function successEffect(){
-
+  document.querySelector(".scan-box")
+.style.borderColor = "#00ff99";
+  document.getElementById("reader")
+.style.transform = "scale(1.03)";
   if(navigator.vibrate){
 
     navigator.vibrate([200,80,200]);
@@ -309,8 +421,8 @@ async function startCamera(cameraId){
       cameraId,
 
       {
-        fps:20,
-
+        fps:30,
+        disableFlip:true,
         qrbox:{
           width:280,
           height:180
@@ -393,13 +505,16 @@ function sendData(text){
     result.innerHTML =
       "📶 Mất mạng - đã lưu";
 
-    (false);
+    errorEffect();
 
-    vibrate(false);
+setTimeout(()=>{
 
-    resetScan();
-  });
-}
+  scanning = true;
+
+  result.innerHTML =
+    "📷 Sẵn sàng quét";
+
+},3000);
 
 
 // ================= RESULT =================
