@@ -312,7 +312,7 @@ function onScan(text){
 // ================== SEND (ONLINE/OFFLINE) ==================
 function sendData(text){
 
-  fetch("https://script.google.com/macros/s/AKfycbxIvsojmleGe-62NmI3iWC60iDd2c5y8S6HV7QV9Eqfblf634cdKkubCHMi78LZkMmm/exec?mtn=" + encodeURIComponent(text)) // thay URL gsheet sau khi deploy web app (2 chỗ (1))
+  fetch("https://script.google.com/macros/s/AKfycbyo9D1Wkg_cU0L4SFMcFnU3Zu1oXkyMJnFc7xRkGflq6TlQMdv0mh3JslKoDm2UvBKW/exec?mtn=" + encodeURIComponent(text)) // thay URL gsheet sau khi deploy web app (2 chỗ (1))
   .then(r => r.json())
   .then(res => {
 
