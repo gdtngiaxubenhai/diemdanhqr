@@ -115,13 +115,41 @@ const result = document.getElementById("result");
 
 const popup = document.getElementById("popup");
 
-const successAudio = new Audio(
-  "https://www.soundjay.com/buttons/sounds/button-09.mp3"
-);
+let audioContext;
 
-const errorAudio = new Audio(
-  "https://www.soundjay.com/buttons/sounds/button-10.mp3"
-);
+function createBeep(freq = 800, duration = 120){
+
+  if(!audioContext){
+
+    audioContext =
+      new (window.AudioContext ||
+      window.webkitAudioContext)();
+  }
+
+  const oscillator =
+    audioContext.createOscillator();
+
+  const gainNode =
+    audioContext.createGain();
+
+  oscillator.connect(gainNode);
+
+  gainNode.connect(audioContext.destination);
+
+  oscillator.frequency.value = freq;
+
+  oscillator.type = "sine";
+
+  gainNode.gain.value = 0.2;
+
+  oscillator.start();
+
+  setTimeout(()=>{
+
+    oscillator.stop();
+
+  }, duration);
+}
 
 successAudio.preload = "auto";
 errorAudio.preload = "auto";
@@ -151,56 +179,53 @@ async function enableSound(){
 
   try{
 
-    await successAudio.play();
+    audioContext =
+      new (window.AudioContext ||
+      window.webkitAudioContext)();
 
-    successAudio.pause();
+    await audioContext.resume();
 
-    successAudio.currentTime = 0;
-
-    await errorAudio.play();
-
-    errorAudio.pause();
-
-    errorAudio.currentTime = 0;
-
-    soundEnabled = true;
+    createBeep(1000,100);
 
     navigator.vibrate?.([200,100,200]);
 
+    soundEnabled = true;
+
     alert("✅ Đã bật âm thanh & rung");
 
-  }catch(e){
+  }catch(err){
 
-    console.log(e);
+    console.log(err);
 
     alert("❌ Không bật được âm thanh");
   }
 }
 
-function beep(ok=true){
+function beep(ok = true){
 
   if(!soundEnabled) return;
 
-  const audio = ok ? successAudio : errorAudio;
+  if(ok){
 
-  audio.pause();
+    createBeep(1200,120);
 
-  audio.currentTime = 0;
+  }else{
 
-  audio.play().catch(()=>{});
+    createBeep(300,250);
+  }
 }
 
-function vibrate(ok=true){
+function vibrate(ok = true){
 
   if(!navigator.vibrate) return;
 
   if(ok){
 
-    navigator.vibrate([250,100,250]);
+    navigator.vibrate([300,100,300]);
 
   }else{
 
-    navigator.vibrate([100,50,100]);
+    navigator.vibrate([100,50,100,50,100]);
   }
 }
 
@@ -365,7 +390,10 @@ function sendData(text){
 // ================= RESULT =================
 
 function handleResult(res){
+  if(audioContext?.state === "suspended"){
 
+  audioContext.resume();
+}
   beep(res.success);
 
   vibrate(res.success);
@@ -556,7 +584,28 @@ Html5Qrcode.getCameras()
   result.innerHTML =
     "❌ Không cấp quyền camera";
 });
+document.body.addEventListener(
 
+  "touchstart",
+
+  async ()=>{
+
+    if(!audioContext){
+
+      audioContext =
+        new (window.AudioContext ||
+        window.webkitAudioContext)();
+    }
+
+    if(audioContext.state === "suspended"){
+
+      await audioContext.resume();
+    }
+
+  },
+
+  { once:true }
+);
 </script>
 
 </body>
