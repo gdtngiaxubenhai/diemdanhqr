@@ -316,7 +316,7 @@ function onScan(decodedText){
 
   scanning = false;
 
-  // rung ngay khi bắt được QR
+  // rung ngay lúc bắt QR
   if(navigator.vibrate){
 
     navigator.vibrate(120);
@@ -362,12 +362,16 @@ function sendData(text){
 
     setTimeout(()=>{
 
-      scanning = true;
-      processing = false;
-      result.innerHTML =
-        "📷 Sẵn sàng quét";
+  hidePopup();
 
-    },3000);
+  scanning = true;
+
+  processing = false;
+
+  result.innerHTML =
+    "📷 Sẵn sàng quét";
+
+},3000);
 
   });
 
