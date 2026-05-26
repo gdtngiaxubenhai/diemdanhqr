@@ -1,4 +1,243 @@
-<!DOCTYPE html> <html> <head> <meta name="viewport" content="width=device-width, initial-scale=1"> <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script> <style> body{ font-family:Arial; background:#111; color:white; text-align:center; } #reader{ width:100%; } #result{ font-size:24px; padding:15px; } button{ padding:10px 14px; margin:6px; font-size:15px; border-radius:8px; } #popup{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#111; color:white; padding:30px; border-radius:20px; width:85%; z-index:9999; font-size:28px; font-weight:bold; display:none; box-shadow:0 0 30px #000; } #popup.popup-success{ border:3px solid #00ff99; color:#00ff99; } #popup.popup-error{ border:3px solid #ff4444; color:#ff4444; } #popup.show{ animation:pop 0.2s ease; } @keyframes pop{ from{ transform:translate(-50%,-50%) scale(0.7); opacity:0; } to{ transform:translate(-50%,-50%) scale(1); opacity:1; } } </style> </head> <body> <h2>📷 QR Điểm Danh PRO</h2> <button onclick="enableSound()"> 🔊 Bật âm thanh </button> <button onclick="switchCamera()">🔄 Camera</button> <button onclick="toggleFlash()">🔦 Flash</button> <div id="reader"></div> <div id="result">Sẵn sàng quét</div> <div id="popup"></div> <script> const result = document.getElementById("result"); const popup = document.getElementById("popup"); const successAudio = new Audio( "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" ); const errorAudio = new Audio( "https://actions.google.com/sounds/v1/alarms/beep_short.ogg" ); // preload successAudio.load(); errorAudio.load(); let qr = new Html5Qrcode("reader"); let cameras = []; let cameraIndex = 0; let scanning = true; let lastCode = ""; let lastTime = 0; let flashOn = false; let soundEnabled = false; function enableSound(){ successAudio.volume = 1; errorAudio.volume = 1; successAudio.play() .then(()=>{ successAudio.pause(); successAudio.currentTime = 0; soundEnabled = true; }); errorAudio.play() .then(()=>{ errorAudio.pause(); errorAudio.currentTime = 0; }); // test rung if(navigator.vibrate){ navigator.vibrate([200,100,200]); } alert("✅ Đã bật âm thanh & rung"); } // ================== OFFLINE QUEUE ================== let offlineQueue = JSON.parse(localStorage.getItem("queue") || "[]"); function saveQueue(){ localStorage.setItem("queue", JSON.stringify(offlineQueue)); } // ================== BEEP + VIBRATE ================== function beep(ok=true){ if(!soundEnabled) return; const audio = ok ? successAudio : errorAudio; audio.pause(); audio.currentTime = 0; audio.play() .catch(err=>{ console.log(err); }); } function vibrate(ok=true){ if(!navigator.vibrate) return; if(ok){ navigator.vibrate([250,100,250]); }else{ navigator.vibrate([100,50,100]); } } function showPopup(html, ok=true){ popup.style.display = "block"; popup.className = ok ? "popup-success" : "popup-error"; popup.classList.remove("show"); void popup.offsetWidth; popup.classList.add("show"); popup.innerHTML = html; } function hidePopup(){ popup.style.display = "none"; } // ================== DUPLICATE FILTER ================== function isDuplicate(code){ const now = Date.now(); if(code === lastCode && now - lastTime < 3000){ return true; } lastCode = code; lastTime = now; return false; } // ================== START CAMERA ================== async function startCamera(id){ try{
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+body{
+  font-family:Arial;
+  background:#111;
+  color:white;
+  text-align:center;
+}
+
+#reader{ width:100%; }
+
+#result{
+  font-size:24px;
+  padding:15px;
+}
+
+button{
+  padding:10px 14px;
+  margin:6px;
+  font-size:15px;
+  border-radius:8px;
+}
+  #popup{
+
+  position:fixed;
+
+  top:50%;
+  left:50%;
+
+  transform:translate(-50%,-50%);
+
+  background:#111;
+
+  color:white;
+
+  padding:30px;
+
+  border-radius:20px;
+
+  width:85%;
+
+  z-index:9999;
+
+  font-size:28px;
+
+  font-weight:bold;
+
+  display:none;
+
+  box-shadow:0 0 30px #000;
+}
+
+#popup.popup-success{
+  border:3px solid #00ff99;
+  color:#00ff99;
+}
+
+#popup.popup-error{
+  border:3px solid #ff4444;
+  color:#ff4444;
+}
+  #popup.show{
+  animation:pop 0.2s ease;
+}
+
+@keyframes pop{
+
+  from{
+    transform:translate(-50%,-50%) scale(0.7);
+    opacity:0;
+  }
+
+  to{
+    transform:translate(-50%,-50%) scale(1);
+    opacity:1;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<h2>📷 QR Điểm Danh PRO</h2>
+<button onclick="enableSound()">
+🔊 Bật âm thanh
+</button>
+<button onclick="switchCamera()">🔄 Camera</button>
+<button onclick="toggleFlash()">🔦 Flash</button>
+
+<div id="reader"></div>
+<div id="result">Sẵn sàng quét</div>
+<div id="popup"></div>
+<script>
+
+const result = document.getElementById("result");
+const popup =
+  document.getElementById("popup");
+
+const successAudio = new Audio(
+  "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+);
+
+const errorAudio = new Audio(
+  "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+);
+
+// preload
+successAudio.load();
+errorAudio.load();
+let qr = new Html5Qrcode("reader");
+
+let cameras = [];
+let cameraIndex = 0;
+
+let scanning = true;
+let lastCode = "";
+let lastTime = 0;
+
+let flashOn = false;
+let soundEnabled = false;
+  function enableSound(){
+
+  successAudio.volume = 1;
+  errorAudio.volume = 1;
+
+  successAudio.play()
+  .then(()=>{
+
+    successAudio.pause();
+
+    successAudio.currentTime = 0;
+
+    soundEnabled = true;
+
+  });
+
+  errorAudio.play()
+  .then(()=>{
+
+    errorAudio.pause();
+
+    errorAudio.currentTime = 0;
+
+  });
+
+  // test rung
+  if(navigator.vibrate){
+
+    navigator.vibrate([200,100,200]);
+  }
+
+  alert("✅ Đã bật âm thanh & rung");
+}
+// ================== OFFLINE QUEUE ==================
+let offlineQueue = JSON.parse(localStorage.getItem("queue") || "[]");
+
+function saveQueue(){
+  localStorage.setItem("queue", JSON.stringify(offlineQueue));
+}
+
+// ================== BEEP + VIBRATE ==================
+function beep(ok=true){
+
+  if(!soundEnabled) return;
+
+  const audio =
+    ok
+    ? successAudio
+    : errorAudio;
+
+  audio.pause();
+
+  audio.currentTime = 0;
+
+  audio.play()
+  .catch(err=>{
+
+    console.log(err);
+  });
+}
+
+function vibrate(ok=true){
+
+  if(!navigator.vibrate) return;
+
+  if(ok){
+
+    navigator.vibrate([250,100,250]);
+
+  }else{
+
+    navigator.vibrate([100,50,100]);
+  }
+}
+  
+function showPopup(html, ok=true){
+
+  popup.style.display = "block";
+
+  popup.className =
+  ok
+  ? "popup-success"
+  : "popup-error";
+
+popup.classList.remove("show");
+
+void popup.offsetWidth;
+
+popup.classList.add("show");
+
+  popup.innerHTML = html;
+}
+
+function hidePopup(){
+
+  popup.style.display = "none";
+}
+// ================== DUPLICATE FILTER ==================
+function isDuplicate(code){
+  const now = Date.now();
+  if(code === lastCode && now - lastTime < 3000){
+    return true;
+  }
+  lastCode = code;
+  lastTime = now;
+  return false;
+}
+
+// ================== START CAMERA ==================
+async function startCamera(id){
+
+try{
+
+```
 if(qr.isScanning){
 
   await qr.stop();
@@ -43,8 +282,227 @@ await qr.start(
 
   onScan
 );
+```
+
 }catch(e){
+
+```
 console.log(e);
 
 result.innerHTML = "❌ Camera lỗi";
-} } // ================== SCAN ================== function onScan(text){ if(!scanning) return; if(isDuplicate(text)) return; scanning = false; result.innerHTML = "⏳ Đang xử lý..."; sendData(text); } // ================== SEND (ONLINE/OFFLINE) ================== function sendData(text){ fetch("https://script.google.com/macros/s/AKfycbxIvsojmleGe-62NmI3iWC60iDd2c5y8S6HV7QV9Eqfblf634cdKkubCHMi78LZkMmm/exec?mtn=" + encodeURIComponent(text)) // thay URL gsheet sau khi deploy web app (2 chỗ (1)) .then(r => r.json()) .then(res => { handleResult(res); }) .catch(() => { // ❌ OFFLINE → lưu queue offlineQueue.push(text); saveQueue(); result.innerHTML = "📶 Mất mạng - đã lưu lại"; beep(false); vibrate(); resetScan(); }); } // ================== HANDLE RESULT ================== function handleResult(res){ beep(res.success); vibrate(res.success); if(res.success){ result.innerHTML = ✅ ${res.message} ; showPopup( ✅ ${res.message} <br><br> 👤 ${res.name} <br> 🏫 ${res.lop} , true ); document.body.style.background = "#063"; }else{ result.innerHTML = ❌ ${res.message} ; showPopup( ❌ ${res.message} , false ); document.body.style.background = "#500"; } setTimeout(()=>{ document.body.style.background = "#111"; },200); resetScan(); } // ================== RESET ================== function resetScan(){ setTimeout(() => { hidePopup(); scanning = true; result.innerHTML = "📷 Sẵn sàng quét"; }, 3000); } document.body.addEventListener( "click", () => { successAudio.play() .then(()=>{ successAudio.pause(); successAudio.currentTime = 0; }).catch(()=>{}); errorAudio.play() .then(()=>{ errorAudio.pause(); errorAudio.currentTime = 0; }).catch(()=>{}); }, { once:true } ); // ================== CAMERA INIT (AUTO BACK CAMERA) ================== Html5Qrcode.getCameras().then(devs => { cameras = devs; // ưu tiên camera sau let back = devs.find(d => /back|rear|environment/i.test(d.label) ); cameraIndex = back ? devs.indexOf(back) : devs.length - 1; startCamera(cameras[cameraIndex].id); }); // ================== SWITCH CAMERA ================== function switchCamera(){ if(cameras.length < 2){ alert("Chỉ có 1 camera"); return; } cameraIndex = (cameraIndex + 1) % cameras.length; startCamera(cameras[cameraIndex].id); result.innerHTML = "🔄 Đang đổi camera..."; } // ================== FLASH (BEST EFFORT) ================== async function toggleFlash(){ try{ const track = qr.getRunningTrack ? qr.getRunningTrack() : null; if(!track){ alert("Chưa mở camera"); return; } flashOn = !flashOn; await track.applyConstraints({ advanced: [{ torch: flashOn }] }); result.innerHTML = flashOn ? "🔦 Flash ON" : "🔦 Flash OFF"; }catch(e){ alert("Thiết bị không hỗ trợ flash"); } } // ================== AUTO SYNC OFFLINE QUEUE ================== setInterval(() => { if(offlineQueue.length === 0) return; if(!navigator.onLine) return; const item = offlineQueue.shift(); saveQueue(); fetch("https://script.google.com/macros/s/AKfycbxIvsojmleGe-62NmI3iWC60iDd2c5y8S6HV7QV9Eqfblf634cdKkubCHMi78LZkMmm/exec?mtn=" + encodeURIComponent(item));// thay URL gsheet sau khi deploy web app (2 chỗ (2)) }, 5000); </script> </body> </html>
+```
+
+}
+}
+
+
+// ================== SCAN ==================
+function onScan(text){
+
+  if(!scanning) return;
+  if(isDuplicate(text)) return;
+
+  scanning = false;
+  result.innerHTML = "⏳ Đang xử lý...";
+
+  sendData(text);
+
+}
+
+// ================== SEND (ONLINE/OFFLINE) ==================
+function sendData(text){
+
+  fetch("https://script.google.com/macros/s/AKfycbxIvsojmleGe-62NmI3iWC60iDd2c5y8S6HV7QV9Eqfblf634cdKkubCHMi78LZkMmm/exec?mtn=" + encodeURIComponent(text)) // thay URL gsheet sau khi deploy web app (2 chỗ (1))
+  .then(r => r.json())
+  .then(res => {
+
+    handleResult(res);
+
+  })
+  .catch(() => {
+
+    // ❌ OFFLINE → lưu queue
+    offlineQueue.push(text);
+    saveQueue();
+
+    result.innerHTML = "📶 Mất mạng - đã lưu lại";
+    beep(false);
+    vibrate();
+
+    resetScan();
+  });
+}
+
+// ================== HANDLE RESULT ==================
+function handleResult(res){
+
+  beep(res.success);
+
+  vibrate(res.success);
+
+  if(res.success){
+
+    result.innerHTML =
+      `
+      ✅ ${res.message}
+      `;
+
+    showPopup(
+      `
+      ✅ ${res.message}
+
+      <br><br>
+
+      👤 ${res.name}
+
+      <br>
+
+      🏫 ${res.lop}
+      `,
+      true
+    );
+
+    document.body.style.background =
+      "#063";
+
+  }else{
+
+    result.innerHTML =
+      `
+      ❌ ${res.message}
+      `;
+
+    showPopup(
+      `
+      ❌ ${res.message}
+      `,
+      false
+    );
+
+    document.body.style.background =
+      "#500";
+  }
+
+  setTimeout(()=>{
+
+    document.body.style.background =
+      "#111";
+
+  },200);
+
+  resetScan();
+}
+
+// ================== RESET ==================
+function resetScan(){
+
+  setTimeout(() => {
+
+    hidePopup();
+
+    scanning = true;
+
+    result.innerHTML =
+      "📷 Sẵn sàng quét";
+
+  }, 3000);
+}
+document.body.addEventListener(
+  "click",
+  () => {
+
+    successAudio.play()
+    .then(()=>{
+
+      successAudio.pause();
+
+      successAudio.currentTime = 0;
+
+    }).catch(()=>{});
+
+    errorAudio.play()
+    .then(()=>{
+
+      errorAudio.pause();
+
+      errorAudio.currentTime = 0;
+
+    }).catch(()=>{});
+
+  },
+  { once:true }
+);
+// ================== CAMERA INIT (AUTO BACK CAMERA) ==================
+Html5Qrcode.getCameras().then(devs => {
+
+  cameras = devs;
+
+  // ưu tiên camera sau
+  let back = devs.find(d =>
+    /back|rear|environment/i.test(d.label)
+  );
+
+  cameraIndex = back ? devs.indexOf(back) : devs.length - 1;
+
+  startCamera(cameras[cameraIndex].id);
+});
+
+// ================== SWITCH CAMERA ==================
+function switchCamera(){
+
+  if(cameras.length < 2){
+    alert("Chỉ có 1 camera");
+    return;
+  }
+
+  cameraIndex = (cameraIndex + 1) % cameras.length;
+
+  startCamera(cameras[cameraIndex].id);
+
+  result.innerHTML = "🔄 Đang đổi camera...";
+}
+
+// ================== FLASH (BEST EFFORT) ==================
+async function toggleFlash(){
+
+  try{
+    const track =
+  qr.getRunningTrack
+  ? qr.getRunningTrack()
+  : null;
+
+    if(!track){
+      alert("Chưa mở camera");
+      return;
+    }
+
+    flashOn = !flashOn;
+
+    await track.applyConstraints({
+      advanced: [{ torch: flashOn }]
+    });
+
+    result.innerHTML = flashOn ? "🔦 Flash ON" : "🔦 Flash OFF";
+
+  }catch(e){
+    alert("Thiết bị không hỗ trợ flash");
+  }
+}
+
+// ================== AUTO SYNC OFFLINE QUEUE ==================
+setInterval(() => {
+
+  if(offlineQueue.length === 0) return;
+  if(!navigator.onLine) return;
+
+  const item = offlineQueue.shift();
+  saveQueue();
+
+  fetch("https://script.google.com/macros/s/AKfycbxIvsojmleGe-62NmI3iWC60iDd2c5y8S6HV7QV9Eqfblf634cdKkubCHMi78LZkMmm/exec?mtn=" + encodeURIComponent(item));// thay URL gsheet sau khi deploy web app (2 chỗ (2))
+
+}, 5000);
+
+</script>
+
+</body>
+</html>
