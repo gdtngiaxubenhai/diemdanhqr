@@ -389,23 +389,24 @@ function sendData(text){
 
   .catch(() => {
 
-    offlineQueue.push(text);
+  offlineQueue.push(text);
 
-    saveQueue();
-
-    result.innerHTML =
-      "📶 Mất mạng - đã lưu";
-
-   errorEffect();
-
-setTimeout(()=>{
-
-  scanning = true;
+  saveQueue();
 
   result.innerHTML =
-    "📷 Sẵn sàng quét";
+    "📶 Mất mạng - đã lưu";
 
-},3000);
+  errorEffect();
+
+  setTimeout(()=>{
+
+    scanning = true;
+
+    result.innerHTML =
+      "📷 Sẵn sàng quét";
+
+  },3000);
+
 });
 
 // ================= RESULT =================
