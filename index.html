@@ -115,41 +115,17 @@ const result = document.getElementById("result");
 
 const popup = document.getElementById("popup");
 
-let audioContext;
+const successAudio = new Audio(
+  "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+);
 
-function createBeep(freq = 800, duration = 120){
+const errorAudio = new Audio(
+  "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+);
 
-  if(!audioContext){
-
-    audioContext =
-      new (window.AudioContext ||
-      window.webkitAudioContext)();
-  }
-
-  const oscillator =
-    audioContext.createOscillator();
-
-  const gainNode =
-    audioContext.createGain();
-
-  oscillator.connect(gainNode);
-
-  gainNode.connect(audioContext.destination);
-
-  oscillator.frequency.value = freq;
-
-  oscillator.type = "square";
-
-  gainNode.gain.value = 0.2;
-
-  oscillator.start();
-
-  setTimeout(()=>{
-
-    oscillator.stop();
-
-  }, duration);
-}
+// preload
+successAudio.load();
+errorAudio.load();
 
 successAudio.preload = "auto";
 errorAudio.preload = "auto";
@@ -179,17 +155,24 @@ async function enableSound(){
 
   try{
 
-    audioContext =
-      new (window.AudioContext ||
-      window.webkitAudioContext)();
+    await successAudio.play();
 
-    await audioContext.resume();
+    successAudio.pause();
 
-    createBeep(1000,100);
+    successAudio.currentTime = 0;
 
-    navigator.vibrate?.([200,100,200]);
+    await errorAudio.play();
+
+    errorAudio.pause();
+
+    errorAudio.currentTime = 0;
 
     soundEnabled = true;
+
+    if(navigator.vibrate){
+
+      navigator.vibrate([200,100,200]);
+    }
 
     alert("✅ Đã bật âm thanh & rung");
 
@@ -197,38 +180,9 @@ async function enableSound(){
 
     console.log(err);
 
-    alert("❌ Không bật được âm thanh");
+    alert("❌ Trình duyệt chặn âm thanh");
   }
 }
-
-function beep(ok = true){
-
-  if(!soundEnabled) return;
-
-  if(ok){
-
-    createBeep(1200,120);
-
-  }else{
-
-    createBeep(300,250);
-  }
-}
-
-function vibrate(ok = true){
-
-  if(!navigator.vibrate) return;
-
-  if(ok){
-
-    navigator.vibrate([300,100,300]);
-
-  }else{
-
-    navigator.vibrate([100,50,100,50,100]);
-  }
-}
-
 
 // ================= POPUP =================
 
@@ -253,7 +207,68 @@ function hidePopup(){
 
   popup.style.display = "none";
 }
+function successEffect(){
 
+  if(navigator.vibrate){
+
+    navigator.vibrate([200,80,200]);
+  }
+
+  successAudio.pause();
+
+  successAudio.currentTime = 0;
+
+  const playPromise =
+    successAudio.play();
+
+  if(playPromise !== undefined){
+
+    playPromise.catch(err=>{
+
+      console.log(err);
+    });
+  }
+
+  document.body.style.background = "#063";
+
+  setTimeout(()=>{
+
+    document.body.style.background = "#111";
+
+  },150);
+}
+
+
+function errorEffect(){
+
+  if(navigator.vibrate){
+
+    navigator.vibrate([100,80,100]);
+  }
+
+  errorAudio.pause();
+
+  errorAudio.currentTime = 0;
+
+  const playPromise =
+    errorAudio.play();
+
+  if(playPromise !== undefined){
+
+    playPromise.catch(err=>{
+
+      console.log(err);
+    });
+  }
+
+  document.body.style.background = "#500";
+
+  setTimeout(()=>{
+
+    document.body.style.background = "#111";
+
+  },200);
+}
 
 // ================= DUPLICATE =================
 
@@ -378,7 +393,7 @@ function sendData(text){
     result.innerHTML =
       "📶 Mất mạng - đã lưu";
 
-    beep(false);
+    (false);
 
     vibrate(false);
 
@@ -390,24 +405,17 @@ function sendData(text){
 // ================= RESULT =================
 
 function handleResult(res){
-  if(audioContext?.state === "suspended"){
-
-  audioContext.resume();
-}
-  beep(res.success);
-
-  vibrate(res.success);
 
   if(res.success){
 
-    document.body.style.background =
-      "#008855";
+    successEffect();
 
     result.innerHTML =
-      `✅ ${res.message}`;
+      `
+      ✅ ${res.message}
+      `;
 
     showPopup(
-
       `
       ✅ ${res.message}
 
@@ -419,43 +427,27 @@ function handleResult(res){
 
       🏫 ${res.lop}
       `,
-
       true
     );
 
   }else{
 
-    document.body.style.background =
-      "#880000";
+    errorEffect();
 
     result.innerHTML =
-      `❌ ${res.message}`;
+      `
+      ❌ ${res.message}
+      `;
 
     showPopup(
-
       `
       ❌ ${res.message}
       `,
-
       false
     );
   }
 
-  setTimeout(()=>{
-
-    document.body.style.background =
-      "#111";
-
-  },200);
-
-  resetScan();
-}
-
-
-// ================= RESET =================
-
-function resetScan(){
-
+  // dừng 3 giây
   setTimeout(()=>{
 
     hidePopup();
@@ -465,8 +457,11 @@ function resetScan(){
     result.innerHTML =
       "📷 Sẵn sàng quét";
 
-  },1500);
+  },3000);
 }
+
+
+
 
 
 // ================= SWITCH CAMERA =================
@@ -584,28 +579,7 @@ Html5Qrcode.getCameras()
   result.innerHTML =
     "❌ Không cấp quyền camera";
 });
-document.body.addEventListener(
 
-  "touchstart",
-
-  async ()=>{
-
-    if(!audioContext){
-
-      audioContext =
-        new (window.AudioContext ||
-        window.webkitAudioContext)();
-    }
-
-    if(audioContext.state === "suspended"){
-
-      await audioContext.resume();
-    }
-
-  },
-
-  { once:true }
-);
 </script>
 
 </body>
