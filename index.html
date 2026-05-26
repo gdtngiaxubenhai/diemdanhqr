@@ -112,7 +112,6 @@ button{
 <script>
 
 const result = document.getElementById("result");
-
 const popup = document.getElementById("popup");
 
 const successAudio = new Audio(
@@ -123,68 +122,53 @@ const errorAudio = new Audio(
   "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
 );
 
-// preload
-successAudio.load();
-errorAudio.load();
-
 successAudio.preload = "auto";
 errorAudio.preload = "auto";
-
-let soundEnabled = false;
 
 let html5QrCode = new Html5Qrcode("reader");
 
 let cameras = [];
-
 let cameraIndex = 0;
-
 let scanning = true;
-
 let lastCode = "";
-
 let lastTime = 0;
-
 let flashOn = false;
-
 let cameraStarted = false;
 
 
-// ================= SOUND =================
+// ================= EFFECT =================
 
-async function enableSound(){
+function successEffect(){
 
-  try{
+  navigator.vibrate?.([200,80,200]);
 
-    await successAudio.play();
+  successAudio.pause();
+  successAudio.currentTime = 0;
 
-    successAudio.pause();
+  successAudio.play().catch(()=>{});
 
-    successAudio.currentTime = 0;
+  document.body.style.background = "#063";
 
-    await errorAudio.play();
-
-    errorAudio.pause();
-
-    errorAudio.currentTime = 0;
-
-    soundEnabled = true;
-
-    if(navigator.vibrate){
-
-      navigator.vibrate([200,100,200]);
-    }
-
-    alert("✅ Đã bật âm thanh & rung");
-
-  }catch(err){
-
-    console.log(err);
-
-    alert("❌ Trình duyệt chặn âm thanh");
-  }
+  setTimeout(()=>{
+    document.body.style.background = "#111";
+  },150);
 }
 
+function errorEffect(){
 
+  navigator.vibrate?.([100,80,100]);
+
+  errorAudio.pause();
+  errorAudio.currentTime = 0;
+
+  errorAudio.play().catch(()=>{});
+
+  document.body.style.background = "#500";
+
+  setTimeout(()=>{
+    document.body.style.background = "#111";
+  },200);
+}
 
 
 // ================= POPUP =================
@@ -193,15 +177,10 @@ function showPopup(html, ok=true){
 
   popup.style.display = "block";
 
-  popup.className = ok
-    ? "popup-success"
-    : "popup-error";
-
-  popup.classList.remove("show");
-
-  void popup.offsetWidth;
-
-  popup.classList.add("show");
+  popup.className =
+    ok
+    ? "popup-success show"
+    : "popup-error show";
 
   popup.innerHTML = html;
 }
@@ -210,68 +189,7 @@ function hidePopup(){
 
   popup.style.display = "none";
 }
-function successEffect(){
 
-  if(navigator.vibrate){
-
-    navigator.vibrate([200,80,200]);
-  }
-
-  successAudio.pause();
-
-  successAudio.currentTime = 0;
-
-  const playPromise =
-    successAudio.play();
-
-  if(playPromise !== undefined){
-
-    playPromise.catch(err=>{
-
-      console.log(err);
-    });
-  }
-
-  document.body.style.background = "#063";
-
-  setTimeout(()=>{
-
-    document.body.style.background = "#111";
-
-  },150);
-}
-
-
-function errorEffect(){
-
-  if(navigator.vibrate){
-
-    navigator.vibrate([100,80,100]);
-  }
-
-  errorAudio.pause();
-
-  errorAudio.currentTime = 0;
-
-  const playPromise =
-    errorAudio.play();
-
-  if(playPromise !== undefined){
-
-    playPromise.catch(err=>{
-
-      console.log(err);
-    });
-  }
-
-  document.body.style.background = "#500";
-
-  setTimeout(()=>{
-
-    document.body.style.background = "#111";
-
-  },200);
-}
 
 // ================= DUPLICATE =================
 
@@ -285,14 +203,13 @@ function isDuplicate(code){
   }
 
   lastCode = code;
-
   lastTime = now;
 
   return false;
 }
 
 
-// ================= START CAMERA =================
+// ================= CAMERA =================
 
 async function startCamera(cameraId){
 
@@ -337,7 +254,8 @@ async function startCamera(cameraId){
 
     console.log(err);
 
-    result.innerHTML = "❌ Không mở được camera";
+    result.innerHTML =
+      "❌ Không mở được camera";
   }
 }
 
@@ -352,25 +270,14 @@ function onScan(decodedText){
 
   scanning = false;
 
-  result.innerHTML = "⏳ Đang xử lý...";
+  result.innerHTML =
+    "⏳ Đang xử lý...";
 
   sendData(decodedText);
 }
 
 
 // ================= SEND =================
-
-let offlineQueue = JSON.parse(
-  localStorage.getItem("queue") || "[]"
-);
-
-function saveQueue(){
-
-  localStorage.setItem(
-    "queue",
-    JSON.stringify(offlineQueue)
-  );
-}
 
 function sendData(text){
 
@@ -387,28 +294,29 @@ function sendData(text){
 
   })
 
-  .catch(() => {
+  .catch(err => {
 
-  offlineQueue.push(text);
-
-  saveQueue();
-
-  result.innerHTML =
-    "📶 Mất mạng - đã lưu";
-
-  errorEffect();
-
-  setTimeout(()=>{
-
-    scanning = true;
+    console.log(err);
 
     result.innerHTML =
-      "📷 Sẵn sàng quét";
+      "📶 Mất mạng";
 
-  },3000);
+    errorEffect();
 
-});
+    setTimeout(()=>{
+
+      scanning = true;
+
+      result.innerHTML =
+        "📷 Sẵn sàng quét";
+
+    },3000);
+
+  });
+
 }
+
+
 // ================= RESULT =================
 
 function handleResult(res){
@@ -418,11 +326,10 @@ function handleResult(res){
     successEffect();
 
     result.innerHTML =
-      `
-      ✅ ${res.message}
-      `;
+      `✅ ${res.message}`;
 
     showPopup(
+
       `
       ✅ ${res.message}
 
@@ -434,6 +341,7 @@ function handleResult(res){
 
       🏫 ${res.lop}
       `,
+
       true
     );
 
@@ -442,19 +350,18 @@ function handleResult(res){
     errorEffect();
 
     result.innerHTML =
-      `
-      ❌ ${res.message}
-      `;
+      `❌ ${res.message}`;
 
     showPopup(
+
       `
       ❌ ${res.message}
       `,
+
       false
     );
   }
 
-  // dừng 3 giây
   setTimeout(()=>{
 
     hidePopup();
@@ -466,6 +373,7 @@ function handleResult(res){
 
   },3000);
 }
+
 
 // ================= SWITCH CAMERA =================
 
@@ -501,8 +409,8 @@ async function toggleFlash(){
     flashOn = !flashOn;
 
     await track.applyConstraints({
-      advanced:[{
-        torch:flashOn
+      advanced: [{
+        torch: flashOn
       }]
     });
 
@@ -516,26 +424,6 @@ async function toggleFlash(){
     alert("❌ Máy không hỗ trợ flash");
   }
 }
-
-
-// ================= OFFLINE AUTO SYNC =================
-
-setInterval(()=>{
-
-  if(!navigator.onLine) return;
-
-  if(offlineQueue.length === 0) return;
-
-  const item = offlineQueue.shift();
-
-  saveQueue();
-
-  fetch(
-    "https://script.google.com/macros/s/AKfycbyo9D1Wkg_cU0L4SFMcFnU3Zu1oXkyMJnFc7xRkGflq6TlQMdv0mh3JslKoDm2UvBKW/exec?mtn="
-    + encodeURIComponent(item)
-  );
-
-},5000);
 
 
 // ================= INIT =================
