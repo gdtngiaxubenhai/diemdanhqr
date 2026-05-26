@@ -116,16 +116,12 @@ const result = document.getElementById("result");
 const popup = document.getElementById("popup");
 
 const successAudio = new Audio(
-  "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+  "https://www.soundjay.com/buttons/sounds/button-09.mp3"
 );
 
 const errorAudio = new Audio(
-  "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+  "https://www.soundjay.com/buttons/sounds/button-10.mp3"
 );
-
-// preload
-successAudio.load();
-errorAudio.load();
 
 successAudio.preload = "auto";
 errorAudio.preload = "auto";
@@ -169,20 +165,45 @@ async function enableSound(){
 
     soundEnabled = true;
 
-    if(navigator.vibrate){
-
-      navigator.vibrate([200,100,200]);
-    }
+    navigator.vibrate?.([200,100,200]);
 
     alert("✅ Đã bật âm thanh & rung");
 
-  }catch(err){
+  }catch(e){
 
-    console.log(err);
+    console.log(e);
 
-    alert("❌ Trình duyệt chặn âm thanh");
+    alert("❌ Không bật được âm thanh");
   }
 }
+
+function beep(ok=true){
+
+  if(!soundEnabled) return;
+
+  const audio = ok ? successAudio : errorAudio;
+
+  audio.pause();
+
+  audio.currentTime = 0;
+
+  audio.play().catch(()=>{});
+}
+
+function vibrate(ok=true){
+
+  if(!navigator.vibrate) return;
+
+  if(ok){
+
+    navigator.vibrate([250,100,250]);
+
+  }else{
+
+    navigator.vibrate([100,50,100]);
+  }
+}
+
 
 // ================= POPUP =================
 
@@ -207,68 +228,7 @@ function hidePopup(){
 
   popup.style.display = "none";
 }
-function successEffect(){
 
-  if(navigator.vibrate){
-
-    navigator.vibrate([200,80,200]);
-  }
-
-  successAudio.pause();
-
-  successAudio.currentTime = 0;
-
-  const playPromise =
-    successAudio.play();
-
-  if(playPromise !== undefined){
-
-    playPromise.catch(err=>{
-
-      console.log(err);
-    });
-  }
-
-  document.body.style.background = "#063";
-
-  setTimeout(()=>{
-
-    document.body.style.background = "#111";
-
-  },150);
-}
-
-
-function errorEffect(){
-
-  if(navigator.vibrate){
-
-    navigator.vibrate([100,80,100]);
-  }
-
-  errorAudio.pause();
-
-  errorAudio.currentTime = 0;
-
-  const playPromise =
-    errorAudio.play();
-
-  if(playPromise !== undefined){
-
-    playPromise.catch(err=>{
-
-      console.log(err);
-    });
-  }
-
-  document.body.style.background = "#500";
-
-  setTimeout(()=>{
-
-    document.body.style.background = "#111";
-
-  },200);
-}
 
 // ================= DUPLICATE =================
 
@@ -393,33 +353,34 @@ function sendData(text){
     result.innerHTML =
       "📶 Mất mạng - đã lưu";
 
-    errorEffect();
+    beep(false);
 
-setTimeout(()=>{
+    vibrate(false);
 
-  scanning = true;
-
-  result.innerHTML =
-    "📷 Sẵn sàng quét";
-
-},3000);
+    resetScan();
+  });
+}
 
 
 // ================= RESULT =================
 
 function handleResult(res){
 
+  beep(res.success);
+
+  vibrate(res.success);
+
   if(res.success){
 
-    successEffect();
+    document.body.style.background =
+      "#008855";
 
     result.innerHTML =
-      
-      ✅ ${res.message}
-      ;
+      `✅ ${res.message}`;
 
     showPopup(
-      
+
+      `
       ✅ ${res.message}
 
       <br><br>
@@ -429,28 +390,44 @@ function handleResult(res){
       <br>
 
       🏫 ${res.lop}
-      ,
+      `,
+
       true
     );
 
   }else{
 
-    errorEffect();
+    document.body.style.background =
+      "#880000";
 
     result.innerHTML =
-      
-      ❌ ${res.message}
-      ;
+      `❌ ${res.message}`;
 
     showPopup(
-      
+
+      `
       ❌ ${res.message}
-      ,
+      `,
+
       false
     );
   }
 
-  // dừng 3 giây
+  setTimeout(()=>{
+
+    document.body.style.background =
+      "#111";
+
+  },200);
+
+  resetScan();
+}
+
+
+// ================= RESET =================
+
+function resetScan(){
+
   setTimeout(()=>{
 
     hidePopup();
@@ -460,11 +437,8 @@ function handleResult(res){
     result.innerHTML =
       "📷 Sẵn sàng quét";
 
-  },3000);
+  },1500);
 }
-
-
-
 
 
 // ================= SWITCH CAMERA =================
