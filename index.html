@@ -140,33 +140,75 @@ let cameraStarted = false;
 
 function successEffect(){
 
-  navigator.vibrate?.([200,80,200]);
+  // rung
+  if(navigator.vibrate){
 
-  successAudio.pause();
-  successAudio.currentTime = 0;
+    navigator.vibrate([200,80,200]);
+  }
 
-  successAudio.play().catch(()=>{});
+  // beep
+  if(soundEnabled){
 
+    successAudio.pause();
+
+    successAudio.currentTime = 0;
+
+    const playPromise =
+      successAudio.play();
+
+    if(playPromise !== undefined){
+
+      playPromise.catch(err=>{
+
+        console.log(err);
+      });
+    }
+  }
+
+  // flash nền
   document.body.style.background = "#063";
 
   setTimeout(()=>{
+
     document.body.style.background = "#111";
+
   },150);
 }
 
 function errorEffect(){
 
-  navigator.vibrate?.([100,80,100]);
+  // rung
+  if(navigator.vibrate){
 
-  errorAudio.pause();
-  errorAudio.currentTime = 0;
+    navigator.vibrate([100,80,100]);
+  }
 
-  errorAudio.play().catch(()=>{});
+  // beep
+  if(soundEnabled){
 
+    errorAudio.pause();
+
+    errorAudio.currentTime = 0;
+
+    const playPromise =
+      errorAudio.play();
+
+    if(playPromise !== undefined){
+
+      playPromise.catch(err=>{
+
+        console.log(err);
+      });
+    }
+  }
+
+  // flash nền
   document.body.style.background = "#500";
 
   setTimeout(()=>{
+
     document.body.style.background = "#111";
+
   },200);
 }
 
