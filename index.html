@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -14,12 +13,20 @@ body{
   background:#111;
   color:white;
   text-align:center;
-  overflow-x:hidden;
-  transition:0.2s;
 }
 
 h2{
-  margin:15px 0 10px;
+  margin-top:15px;
+}
+
+#reader{
+  width:100%;
+}
+
+#result{
+  font-size:24px;
+  padding:15px;
+  font-weight:bold;
 }
 
 button{
@@ -27,209 +34,24 @@ button{
   margin:5px;
   font-size:15px;
   border:none;
-  border-radius:12px;
+  border-radius:10px;
   background:#222;
   color:white;
 }
 
-#reader-container{
-
-  position:relative;
-
-  width:100%;
-
-  overflow:hidden;
-
-  border-radius:24px;
-
-  background:#000;
-
-  margin-top:10px;
-}
-
-#reader{
-
-  width:100%;
-
-  transition:0.15s;
-}
-
-
-/* ================= SCAN BOX ================= */
-
-.scan-box{
-
-  position:absolute;
-
-  top:50%;
-  left:50%;
-
-  transform:translate(-50%,-50%);
-
-  width:85%;
-  height:200px;
-
-  border:2px solid rgba(255,255,255,0.18);
-
-  border-radius:22px;
-
-  z-index:999;
-
-  pointer-events:none;
-
-  transition:0.15s;
-}
-
-
-/* 4 CORNERS */
-
-.corner{
-
-  position:absolute;
-
-  width:45px;
-  height:45px;
-
-  border-color:#00ff99;
-
-  border-style:solid;
-
-  z-index:1000;
-}
-
-.tl{
-  top:-2px;
-  left:-2px;
-  border-width:5px 0 0 5px;
-  border-radius:20px 0 0 0;
-}
-
-.tr{
-  top:-2px;
-  right:-2px;
-  border-width:5px 5px 0 0;
-  border-radius:0 20px 0 0;
-}
-
-.bl{
-  bottom:-2px;
-  left:-2px;
-  border-width:0 0 5px 5px;
-  border-radius:0 0 0 20px;
-}
-
-.br{
-  bottom:-2px;
-  right:-2px;
-  border-width:0 5px 5px 0;
-  border-radius:0 0 20px 0;
-}
-
-
-/* ================= LASER ================= */
-
-.scan-line{
-
-  position:absolute;
-
-  left:50%;
-
-  transform:translateX(-50%);
-
-  width:82%;
-
-  height:3px;
-
-  background:#ff0000;
-
-  box-shadow:
-    0 0 10px #ff0000,
-    0 0 20px #ff0000,
-    0 0 40px #ff0000;
-
-  z-index:1001;
-
-  border-radius:20px;
-
-  animation:laser 2s linear infinite;
-}
-
-@keyframes laser{
-
-  0%{
-    top:22%;
-  }
-
-  50%{
-    top:72%;
-  }
-
-  100%{
-    top:22%;
-  }
-}
-
-
-/* ================= FOCUS EFFECT ================= */
-
-.focus-effect{
-
-  animation:focusPulse .25s ease;
-}
-
-@keyframes focusPulse{
-
-  0%{
-    transform:scale(1);
-  }
-
-  50%{
-    transform:scale(1.04);
-  }
-
-  100%{
-    transform:scale(1);
-  }
-}
-
-
-/* ================= RESULT ================= */
-
-#result{
-  font-size:24px;
-  padding:18px;
-  font-weight:bold;
-  min-height:90px;
-}
-
-
-/* ================= POPUP ================= */
-
 #popup{
-
   position:fixed;
-
   top:50%;
   left:50%;
-
   transform:translate(-50%,-50%);
-
   background:#111;
-
   padding:30px;
-
-  border-radius:24px;
-
-  width:82%;
-
+  border-radius:20px;
+  width:80%;
   z-index:9999;
-
   font-size:28px;
-
   font-weight:bold;
-
   display:none;
-
   box-shadow:0 0 30px #000;
 }
 
@@ -244,7 +66,7 @@ button{
 }
 
 .show{
-  animation:pop .18s ease;
+  animation:pop .2s ease;
 }
 
 @keyframes pop{
@@ -279,22 +101,7 @@ button{
 🔦 Flash
 </button>
 
-<div id="reader-container">
-
-  <div id="reader"></div>
-
-  <div class="scan-box" id="scanBox">
-
-    <div class="corner tl"></div>
-    <div class="corner tr"></div>
-    <div class="corner bl"></div>
-    <div class="corner br"></div>
-
-  </div>
-
-  <div class="scan-line"></div>
-
-</div>
+<div id="reader"></div>
 
 <div id="result">
 📷 Sẵn sàng quét
@@ -304,17 +111,9 @@ button{
 
 <script>
 
-const result =
-  document.getElementById("result");
+const result = document.getElementById("result");
 
-const popup =
-  document.getElementById("popup");
-
-const reader =
-  document.getElementById("reader");
-
-const scanBox =
-  document.getElementById("scanBox");
+const popup = document.getElementById("popup");
 
 const successAudio = new Audio(
   "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
@@ -324,16 +123,16 @@ const errorAudio = new Audio(
   "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
 );
 
-successAudio.preload = "auto";
-errorAudio.preload = "auto";
-
+// preload
 successAudio.load();
 errorAudio.load();
 
+successAudio.preload = "auto";
+errorAudio.preload = "auto";
+
 let soundEnabled = false;
 
-let html5QrCode =
-  new Html5Qrcode("reader");
+let html5QrCode = new Html5Qrcode("reader");
 
 let cameras = [];
 
@@ -341,16 +140,16 @@ let cameraIndex = 0;
 
 let scanning = true;
 
-let flashOn = false;
-
-let cameraStarted = false;
-
 let lastCode = "";
 
 let lastTime = 0;
 
+let flashOn = false;
 
-/* ================= SOUND ================= */
+let cameraStarted = false;
+
+
+// ================= SOUND =================
 
 async function enableSound(){
 
@@ -370,7 +169,10 @@ async function enableSound(){
 
     soundEnabled = true;
 
-    navigator.vibrate?.([200,100,200]);
+    if(navigator.vibrate){
+
+      navigator.vibrate([200,100,200]);
+    }
 
     alert("✅ Đã bật âm thanh & rung");
 
@@ -378,19 +180,17 @@ async function enableSound(){
 
     console.log(err);
 
-    alert("❌ Browser chặn âm thanh");
+    alert("❌ Trình duyệt chặn âm thanh");
   }
 }
 
-
-/* ================= POPUP ================= */
+// ================= POPUP =================
 
 function showPopup(html, ok=true){
 
   popup.style.display = "block";
 
-  popup.className =
-    ok
+  popup.className = ok
     ? "popup-success"
     : "popup-error";
 
@@ -407,111 +207,77 @@ function hidePopup(){
 
   popup.style.display = "none";
 }
-
-
-/* ================= EFFECTS ================= */
-
 function successEffect(){
-
-  scanBox.style.borderColor =
-    "#00ff99";
-
-  reader.classList.add("focus-effect");
-
-  setTimeout(()=>{
-
-    reader.classList.remove(
-      "focus-effect"
-    );
-
-  },250);
 
   if(navigator.vibrate){
 
     navigator.vibrate([200,80,200]);
   }
 
-  if(soundEnabled){
+  successAudio.pause();
 
-    successAudio.pause();
+  successAudio.currentTime = 0;
 
-    successAudio.currentTime = 0;
+  const playPromise =
+    successAudio.play();
 
-    successAudio.play()
-    .catch(()=>{});
+  if(playPromise !== undefined){
+
+    playPromise.catch(err=>{
+
+      console.log(err);
+    });
   }
 
-  document.body.style.background =
-    "#063";
+  document.body.style.background = "#063";
 
   setTimeout(()=>{
 
-    document.body.style.background =
-      "#111";
+    document.body.style.background = "#111";
 
-    scanBox.style.borderColor =
-      "rgba(255,255,255,0.18)";
-
-  },250);
+  },150);
 }
 
 
 function errorEffect(){
 
-  scanBox.style.borderColor =
-    "#ff4444";
-
-  reader.classList.add("focus-effect");
-
-  setTimeout(()=>{
-
-    reader.classList.remove(
-      "focus-effect"
-    );
-
-  },250);
-
   if(navigator.vibrate){
 
-    navigator.vibrate([100,50,100]);
+    navigator.vibrate([100,80,100]);
   }
 
-  if(soundEnabled){
+  errorAudio.pause();
 
-    errorAudio.pause();
+  errorAudio.currentTime = 0;
 
-    errorAudio.currentTime = 0;
+  const playPromise =
+    errorAudio.play();
 
-    errorAudio.play()
-    .catch(()=>{});
+  if(playPromise !== undefined){
+
+    playPromise.catch(err=>{
+
+      console.log(err);
+    });
   }
 
-  document.body.style.background =
-    "#500";
+  document.body.style.background = "#500";
 
   setTimeout(()=>{
 
-    document.body.style.background =
-      "#111";
+    document.body.style.background = "#111";
 
-    scanBox.style.borderColor =
-      "rgba(255,255,255,0.18)";
-
-  },250);
+  },200);
 }
 
-
-/* ================= DUPLICATE ================= */
+// ================= DUPLICATE =================
 
 function isDuplicate(code){
 
   const now = Date.now();
 
-  if(
-    code === lastCode
-    &&
-    now - lastTime < 3000
-  ){
+  if(code === lastCode && now - lastTime < 3000){
+
     return true;
   }
 
@@ -523,14 +289,13 @@ function isDuplicate(code){
 }
 
 
-/* ================= CAMERA ================= */
+// ================= START CAMERA =================
 
 async function startCamera(cameraId){
 
   try{
 
-    result.innerHTML =
-      "📷 Đang mở camera...";
+    result.innerHTML = "📷 Đang mở camera...";
 
     if(cameraStarted){
 
@@ -544,14 +309,11 @@ async function startCamera(cameraId){
       cameraId,
 
       {
-
-        fps:30,
-
-        disableFlip:true,
+        fps:20,
 
         qrbox:{
-          width:300,
-          height:200
+          width:280,
+          height:180
         },
 
         aspectRatio:1.777,
@@ -559,7 +321,6 @@ async function startCamera(cameraId){
         videoConstraints:{
           facingMode:"environment"
         }
-
       },
 
       onScan
@@ -567,20 +328,18 @@ async function startCamera(cameraId){
 
     cameraStarted = true;
 
-    result.innerHTML =
-      "📷 Sẵn sàng quét";
+    result.innerHTML = "📷 Sẵn sàng quét";
 
   }catch(err){
 
     console.log(err);
 
-    result.innerHTML =
-      "❌ Không mở được camera";
+    result.innerHTML = "❌ Không mở được camera";
   }
 }
 
 
-/* ================= SCAN ================= */
+// ================= SCAN =================
 
 function onScan(decodedText){
 
@@ -590,14 +349,13 @@ function onScan(decodedText){
 
   scanning = false;
 
-  result.innerHTML =
-    "⏳ Đang xử lý...";
+  result.innerHTML = "⏳ Đang xử lý...";
 
   sendData(decodedText);
 }
 
 
-/* ================= SEND ================= */
+// ================= SEND =================
 
 let offlineQueue = JSON.parse(
   localStorage.getItem("queue") || "[]"
@@ -611,7 +369,6 @@ function saveQueue(){
   );
 }
 
-
 function sendData(text){
 
   fetch(
@@ -619,45 +376,36 @@ function sendData(text){
     + encodeURIComponent(text)
   )
 
-  .then(r=>r.json())
+  .then(r => r.json())
 
-  .then(res=>{
+  .then(res => {
 
     handleResult(res);
 
   })
 
-  .catch(()=>{
+  .catch(() => {
 
     offlineQueue.push(text);
 
     saveQueue();
 
-    errorEffect();
-
     result.innerHTML =
       "📶 Mất mạng - đã lưu";
 
-    showPopup(
-      "📶 Mất mạng - đã lưu",
-      false
-    );
+    errorEffect();
 
-    setTimeout(()=>{
+setTimeout(()=>{
 
-      hidePopup();
+  scanning = true;
 
-      scanning = true;
+  result.innerHTML =
+    "📷 Sẵn sàng quét";
 
-      result.innerHTML =
-        "📷 Sẵn sàng quét";
-
-    },3000);
-  });
-}
+},3000);
 
 
-/* ================= RESULT ================= */
+// ================= RESULT =================
 
 function handleResult(res){
 
@@ -666,11 +414,12 @@ function handleResult(res){
     successEffect();
 
     result.innerHTML =
-      `✅ ${res.message}`;
+      
+      ✅ ${res.message}
+      ;
 
     showPopup(
-
-      `
+      
       ✅ ${res.message}
 
       <br><br>
@@ -680,8 +429,7 @@ function handleResult(res){
       <br>
 
       🏫 ${res.lop}
-      `,
-
+      ,
       true
     );
 
@@ -690,18 +438,19 @@ function handleResult(res){
     errorEffect();
 
     result.innerHTML =
-      `❌ ${res.message}`;
+      
+      ❌ ${res.message}
+      ;
 
     showPopup(
-
-      `
+      
       ❌ ${res.message}
-      `,
-
+      ,
       false
     );
   }
 
+  // dừng 3 giây
   setTimeout(()=>{
 
     hidePopup();
@@ -715,7 +464,10 @@ function handleResult(res){
 }
 
 
-/* ================= SWITCH CAMERA ================= */
+
+
+
+// ================= SWITCH CAMERA =================
 
 function switchCamera(){
 
@@ -733,13 +485,11 @@ function switchCamera(){
     cameraIndex = 0;
   }
 
-  startCamera(
-    cameras[cameraIndex].id
-  );
+  startCamera(cameras[cameraIndex].id);
 }
 
 
-/* ================= FLASH ================= */
+// ================= FLASH =================
 
 async function toggleFlash(){
 
@@ -751,7 +501,6 @@ async function toggleFlash(){
     flashOn = !flashOn;
 
     await track.applyConstraints({
-
       advanced:[{
         torch:flashOn
       }]
@@ -769,7 +518,7 @@ async function toggleFlash(){
 }
 
 
-/* ================= OFFLINE SYNC ================= */
+// ================= OFFLINE AUTO SYNC =================
 
 setInterval(()=>{
 
@@ -789,11 +538,11 @@ setInterval(()=>{
 },5000);
 
 
-/* ================= INIT ================= */
+// ================= INIT =================
 
 Html5Qrcode.getCameras()
 
-.then(devices=>{
+.then(devices => {
 
   if(devices.length === 0){
 
@@ -807,8 +556,7 @@ Html5Qrcode.getCameras()
 
   let backCamera =
     devices.find(d =>
-      /back|rear|environment/i
-      .test(d.label)
+      /back|rear|environment/i.test(d.label)
     );
 
   if(backCamera){
@@ -827,7 +575,7 @@ Html5Qrcode.getCameras()
 
 })
 
-.catch(err=>{
+.catch(err => {
 
   console.log(err);
 
