@@ -130,6 +130,7 @@ let html5QrCode = new Html5Qrcode("reader");
 let cameras = [];
 let cameraIndex = 0;
 let scanning = true;
+let processing = false;
 let lastCode = "";
 let lastTime = 0;
 let flashOn = false;
@@ -303,21 +304,35 @@ async function startCamera(cameraId){
 
 
 // ================= SCAN =================
-
 function onScan(decodedText){
 
   if(!scanning) return;
 
+  if(processing) return;
+
   if(isDuplicate(decodedText)) return;
+
+  processing = true;
 
   scanning = false;
 
+  // rung ngay khi bắt được QR
+  if(navigator.vibrate){
+
+    navigator.vibrate(120);
+  }
+
   result.innerHTML =
-    "⏳ Đang xử lý...";
+    `
+    ⏳ ĐANG XỬ LÝ...
+
+    <br><br>
+
+    📦 ${decodedText}
+    `;
 
   sendData(decodedText);
 }
-
 
 // ================= SEND =================
 
@@ -348,7 +363,7 @@ function sendData(text){
     setTimeout(()=>{
 
       scanning = true;
-
+      processing = false;
       result.innerHTML =
         "📷 Sẵn sàng quét";
 
