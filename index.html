@@ -112,6 +112,7 @@ button{
 <script>
 
 const result = document.getElementById("result");
+
 const popup = document.getElementById("popup");
 
 const successAudio = new Audio(
@@ -122,51 +123,112 @@ const errorAudio = new Audio(
   "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
 );
 
+// preload
+successAudio.load();
+errorAudio.load();
+
 successAudio.preload = "auto";
 errorAudio.preload = "auto";
+
+let soundEnabled = false;
 
 let html5QrCode = new Html5Qrcode("reader");
 
 let cameras = [];
+
 let cameraIndex = 0;
+
 let scanning = true;
-let processing = false;
+
 let lastCode = "";
+
 let lastTime = 0;
+
 let flashOn = false;
+
 let cameraStarted = false;
 
 
-// ================= EFFECT =================
+// ================= SOUND =================
 
-function successEffect(){
+async function enableSound(){
 
-  // rung
-  if(navigator.vibrate){
+  try{
 
-    navigator.vibrate([200,80,200]);
-  }
-
-  // beep
-  if(soundEnabled){
+    await successAudio.play();
 
     successAudio.pause();
 
     successAudio.currentTime = 0;
 
-    const playPromise =
-      successAudio.play();
+    await errorAudio.play();
 
-    if(playPromise !== undefined){
+    errorAudio.pause();
 
-      playPromise.catch(err=>{
+    errorAudio.currentTime = 0;
 
-        console.log(err);
-      });
+    soundEnabled = true;
+
+    if(navigator.vibrate){
+
+      navigator.vibrate([200,100,200]);
     }
+
+    alert("✅ Đã bật âm thanh & rung");
+
+  }catch(err){
+
+    console.log(err);
+
+    alert("❌ Trình duyệt chặn âm thanh");
+  }
+}
+
+// ================= POPUP =================
+
+function showPopup(html, ok=true){
+
+  popup.style.display = "block";
+
+  popup.className = ok
+    ? "popup-success"
+    : "popup-error";
+
+  popup.classList.remove("show");
+
+  void popup.offsetWidth;
+
+  popup.classList.add("show");
+
+  popup.innerHTML = html;
+}
+
+function hidePopup(){
+
+  popup.style.display = "none";
+}
+function successEffect(){
+
+  if(navigator.vibrate){
+
+    navigator.vibrate([200,80,200]);
   }
 
-  // flash nền
+  successAudio.pause();
+
+  successAudio.currentTime = 0;
+
+  const playPromise =
+    successAudio.play();
+
+  if(playPromise !== undefined){
+
+    playPromise.catch(err=>{
+
+      console.log(err);
+    });
+  }
+
   document.body.style.background = "#063";
 
   setTimeout(()=>{
@@ -176,34 +238,29 @@ function successEffect(){
   },150);
 }
 
+
 function errorEffect(){
 
-  // rung
   if(navigator.vibrate){
 
     navigator.vibrate([100,80,100]);
   }
 
-  // beep
-  if(soundEnabled){
+  errorAudio.pause();
 
-    errorAudio.pause();
+  errorAudio.currentTime = 0;
 
-    errorAudio.currentTime = 0;
+  const playPromise =
+    errorAudio.play();
 
-    const playPromise =
-      errorAudio.play();
+  if(playPromise !== undefined){
 
-    if(playPromise !== undefined){
+    playPromise.catch(err=>{
 
-      playPromise.catch(err=>{
-
-        console.log(err);
-      });
-    }
+      console.log(err);
+    });
   }
 
-  // flash nền
   document.body.style.background = "#500";
 
   setTimeout(()=>{
@@ -212,27 +269,6 @@ function errorEffect(){
 
   },200);
 }
-
-
-// ================= POPUP =================
-
-function showPopup(html, ok=true){
-
-  popup.style.display = "block";
-
-  popup.className =
-    ok
-    ? "popup-success show"
-    : "popup-error show";
-
-  popup.innerHTML = html;
-}
-
-function hidePopup(){
-
-  popup.style.display = "none";
-}
-
 
 // ================= DUPLICATE =================
 
@@ -246,13 +282,14 @@ function isDuplicate(code){
   }
 
   lastCode = code;
+
   lastTime = now;
 
   return false;
 }
 
 
-// ================= CAMERA =================
+// ================= START CAMERA =================
 
 async function startCamera(cameraId){
 
@@ -297,44 +334,40 @@ async function startCamera(cameraId){
 
     console.log(err);
 
-    result.innerHTML =
-      "❌ Không mở được camera";
+    result.innerHTML = "❌ Không mở được camera";
   }
 }
 
 
 // ================= SCAN =================
+
 function onScan(decodedText){
 
   if(!scanning) return;
 
-  if(processing) return;
-
   if(isDuplicate(decodedText)) return;
-
-  processing = true;
 
   scanning = false;
 
-  // rung ngay lúc bắt QR
-  if(navigator.vibrate){
-
-    navigator.vibrate(120);
-  }
-
-  result.innerHTML =
-    `
-    ⏳ ĐANG XỬ LÝ...
-
-    <br><br>
-
-    📦 ${decodedText}
-    `;
+  result.innerHTML = "⏳ Đang xử lý...";
 
   sendData(decodedText);
 }
 
+
 // ================= SEND =================
+
+let offlineQueue = JSON.parse(
+  localStorage.getItem("queue") || "[]"
+);
+
+function saveQueue(){
+
+  localStorage.setItem(
+    "queue",
+    JSON.stringify(offlineQueue)
+  );
+}
 
 function sendData(text){
 
@@ -351,30 +384,21 @@ function sendData(text){
 
   })
 
-  .catch(err => {
+  .catch(() => {
 
-    console.log(err);
+    offlineQueue.push(text);
+
+    saveQueue();
 
     result.innerHTML =
-      "📶 Mất mạng";
+      "📶 Mất mạng - đã lưu";
 
-    errorEffect();
+    beep(false);
 
-    setTimeout(()=>{
+    vibrate(false);
 
-  hidePopup();
-
-  scanning = true;
-
-  processing = false;
-
-  result.innerHTML =
-    "📷 Sẵn sàng quét";
-
-},3000);
-
+    resetScan();
   });
-
 }
 
 
@@ -387,10 +411,11 @@ function handleResult(res){
     successEffect();
 
     result.innerHTML =
-      `✅ ${res.message}`;
+      `
+      ✅ ${res.message}
+      `;
 
     showPopup(
-
       `
       ✅ ${res.message}
 
@@ -402,7 +427,6 @@ function handleResult(res){
 
       🏫 ${res.lop}
       `,
-
       true
     );
 
@@ -411,18 +435,19 @@ function handleResult(res){
     errorEffect();
 
     result.innerHTML =
-      `❌ ${res.message}`;
+      `
+      ❌ ${res.message}
+      `;
 
     showPopup(
-
       `
       ❌ ${res.message}
       `,
-
       false
     );
   }
 
+  // dừng 3 giây
   setTimeout(()=>{
 
     hidePopup();
@@ -470,8 +495,8 @@ async function toggleFlash(){
     flashOn = !flashOn;
 
     await track.applyConstraints({
-      advanced: [{
-        torch: flashOn
+      advanced:[{
+        torch:flashOn
       }]
     });
 
@@ -485,6 +510,26 @@ async function toggleFlash(){
     alert("❌ Máy không hỗ trợ flash");
   }
 }
+
+
+// ================= OFFLINE AUTO SYNC =================
+
+setInterval(()=>{
+
+  if(!navigator.onLine) return;
+
+  if(offlineQueue.length === 0) return;
+
+  const item = offlineQueue.shift();
+
+  saveQueue();
+
+  fetch(
+    "https://script.google.com/macros/s/AKfycbyo9D1Wkg_cU0L4SFMcFnU3Zu1oXkyMJnFc7xRkGflq6TlQMdv0mh3JslKoDm2UvBKW/exec?mtn="
+    + encodeURIComponent(item)
+  );
+
+},5000);
 
 
 // ================= INIT =================
