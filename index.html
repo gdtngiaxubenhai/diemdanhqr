@@ -393,13 +393,16 @@ function sendData(text){
     result.innerHTML =
       "📶 Mất mạng - đã lưu";
 
-    beep(false);
+    errorEffect();
 
-    vibrate(false);
+setTimeout(()=>{
 
-    resetScan();
-  });
-}
+  scanning = true;
+
+  result.innerHTML =
+    "📷 Sẵn sàng quét";
+
+},3000);
 
 
 // ================= RESULT =================
@@ -411,12 +414,12 @@ function handleResult(res){
     successEffect();
 
     result.innerHTML =
-      `
+      
       ✅ ${res.message}
-      `;
+      ;
 
     showPopup(
-      `
+      
       ✅ ${res.message}
 
       <br><br>
@@ -426,7 +429,7 @@ function handleResult(res){
       <br>
 
       🏫 ${res.lop}
-      `,
+      ,
       true
     );
 
@@ -435,14 +438,14 @@ function handleResult(res){
     errorEffect();
 
     result.innerHTML =
-      `
+      
       ❌ ${res.message}
-      `;
+      ;
 
     showPopup(
-      `
+      
       ❌ ${res.message}
-      `,
+      ,
       false
     );
   }
@@ -459,6 +462,9 @@ function handleResult(res){
 
   },3000);
 }
+
+
+
 
 
 // ================= SWITCH CAMERA =================
