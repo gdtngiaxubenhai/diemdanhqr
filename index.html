@@ -118,14 +118,7 @@ button{
 
 <h2>📷 QR Điểm Danh PRO</h2>
 
-<button onclick="enableSound()">
-🔊 Bật âm thanh
-</button>
-<button onclick="toggleFlash()">
-🔦 Flash
-</button>
-
-<div id="reader" style="display:none;"></div>
+  <div id="reader" style="display:none;"></div>
 
 <button onclick="openScanner()" id="scanBtn">
 📷 Bắt đầu quét
@@ -144,17 +137,15 @@ const result = document.getElementById("result");
 const popup = document.getElementById("popup");
 
 const successAudio = new Audio(
-  "https://www.soundjay.com/buttons/sounds/button-09.mp3"
+  "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
 );
 
 const errorAudio = new Audio(
-  "https://www.soundjay.com/buttons/sounds/button-10.mp3"
+  "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
 );
 
-successAudio.preload = "auto";
-errorAudio.preload = "auto";
-
-let soundEnabled = false;
+successAudio.load();
+errorAudio.load();
 
 let html5QrCode = new Html5Qrcode("reader");
 
@@ -166,72 +157,9 @@ let lastCode = "";
 
 let lastTime = 0;
 
-let flashOn = false;
-
 let cameraStarted = false;
 
 let scannerOpened = false;
-
-
-// ================= SOUND =================
-
-async function enableSound(){
-
-  try{
-
-    await successAudio.play();
-
-    successAudio.pause();
-
-    successAudio.currentTime = 0;
-
-    await errorAudio.play();
-
-    errorAudio.pause();
-
-    errorAudio.currentTime = 0;
-
-    soundEnabled = true;
-
-    navigator.vibrate?.([200,100,200]);
-
-    alert("✅ Đã bật âm thanh & rung");
-
-  }catch(e){
-
-    console.log(e);
-
-    alert("❌ Không bật được âm thanh");
-  }
-}
-
-function beep(ok=true){
-
-  if(!soundEnabled) return;
-
-  const audio = ok ? successAudio : errorAudio;
-
-  audio.pause();
-
-  audio.currentTime = 0;
-
-  audio.play().catch(()=>{});
-}
-
-function vibrate(ok=true){
-
-  if(!navigator.vibrate) return;
-
-  if(ok){
-
-    navigator.vibrate([250,100,250]);
-
-  }else{
-
-    navigator.vibrate([100,50,100]);
-  }
-}
-
 
 // ================= POPUP =================
 
@@ -256,7 +184,71 @@ function hidePopup(){
 
   popup.style.display = "none";
 }
+// ================= SUCCESS =================
 
+function successEffect(){
+
+  if(navigator.vibrate){
+
+    navigator.vibrate([200,80,200]);
+  }
+
+  successAudio.pause();
+
+  successAudio.currentTime = 0;
+
+  const playPromise =
+    successAudio.play();
+
+  if(playPromise !== undefined){
+
+    playPromise.catch(err=>{
+
+      console.log(err);
+    });
+  }
+
+  document.body.style.background = "#063";
+
+  setTimeout(()=>{
+
+    document.body.style.background = "#111";
+
+  },150);
+}
+
+// ================= ERROR =================
+
+function errorEffect(){
+
+  if(navigator.vibrate){
+
+    navigator.vibrate([100,80,100]);
+  }
+
+  errorAudio.pause();
+
+  errorAudio.currentTime = 0;
+
+  const playPromise =
+    errorAudio.play();
+
+  if(playPromise !== undefined){
+
+    playPromise.catch(err=>{
+
+      console.log(err);
+    });
+  }
+
+  document.body.style.background = "#500";
+
+  setTimeout(()=>{
+
+    document.body.style.background = "#111";
+
+  },200);
+}
 
 // ================= DUPLICATE =================
 
@@ -425,11 +417,9 @@ function sendData(text){
 
 function handleResult(res){
 
-  beep(res.success);
+   if(res.success){
 
-  vibrate(res.success);
-
-  if(res.success){
+    successEffect();
 
     document.body.style.background =
       "#008855";
@@ -455,7 +445,7 @@ function handleResult(res){
     );
 
   }else{
-
+    errorEffect();
     document.body.style.background =
       "#880000";
 
@@ -500,35 +490,6 @@ function resetScan(){
 
   },1500);
 }
-
-// ================= FLASH =================
-
-async function toggleFlash(){
-
-  try{
-
-    const track =
-      html5QrCode.getRunningTrack();
-
-    flashOn = !flashOn;
-
-    await track.applyConstraints({
-      advanced:[{
-        torch:flashOn
-      }]
-    });
-
-    result.innerHTML =
-      flashOn
-      ? "🔦 Flash ON"
-      : "🔦 Flash OFF";
-
-  }catch(e){
-
-    alert("❌ Máy không hỗ trợ flash");
-  }
-}
-
 
 // ================= OFFLINE AUTO SYNC =================
 
