@@ -92,11 +92,6 @@ button{
 <button onclick="enableSound()">
 🔊 Bật âm thanh
 </button>
-
-<button onclick="switchCamera()">
-🔄 Camera
-</button>
-
 <button onclick="toggleFlash()">
 🔦 Flash
 </button>
@@ -135,8 +130,6 @@ let soundEnabled = false;
 let html5QrCode = new Html5Qrcode("reader");
 
 let cameras = [];
-
-let cameraIndex = 0;
 
 let scanning = true;
 
@@ -270,11 +263,13 @@ async function openScanner(){
 
     return;
   }
+
+  startCamera();
 }
 
 // ================= START CAMERA =================
 
-async function startCamera(cameraId){
+async function startCamera(){
 
   try{
 
@@ -463,29 +458,6 @@ function resetScan(){
   },1500);
 }
 
-
-// ================= SWITCH CAMERA =================
-
-function switchCamera(){
-
-  if(cameras.length < 2){
-
-    alert("Chỉ có 1 camera");
-
-    return;
-  }
-
-  cameraIndex++;
-
-  if(cameraIndex >= cameras.length){
-
-    cameraIndex = 0;
-  }
-
-  startCamera(cameras[cameraIndex].id);
-}
-
-
 // ================= FLASH =================
 
 async function toggleFlash(){
@@ -550,26 +522,6 @@ Html5Qrcode.getCameras()
   }
 
   cameras = devices;
-
-  let backCamera =
-    devices.find(d =>
-      /back|rear|environment/i.test(d.label)
-    );
-
-  if(backCamera){
-
-    cameraIndex =
-      devices.indexOf(backCamera);
-
-  }else{
-
-    cameraIndex = 0;
-  }
-
-  startCamera(
-    cameras[cameraIndex].id
-  );
-
 })
 
 .catch(err => {
