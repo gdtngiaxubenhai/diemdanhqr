@@ -123,7 +123,9 @@ button{
 <button onclick="openScanner()" id="scanBtn">
 📷 Bắt đầu quét
 </button>
-
+  
+<div id="result"></div>
+  
 <div id="popup"></div>
 
 <script>
@@ -479,8 +481,7 @@ function resetScan(){
 
     scanning = true;
 
-    result.innerHTML =
-      "📷 Nhấn bắt đầu để quét";
+    result.innerHTML ="";
 
     await stopCamera();
 
