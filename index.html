@@ -101,7 +101,11 @@ button{
 🔦 Flash
 </button>
 
-<div id="reader"></div>
+<div id="reader" style="display:none;"></div>
+
+<button onclick="openScanner()" id="scanBtn">
+📷 Bắt đầu quét
+</button>
 
 <div id="result">
 📷 Sẵn sàng quét
@@ -143,6 +147,8 @@ let lastTime = 0;
 let flashOn = false;
 
 let cameraStarted = false;
+
+let scannerOpened = false;
 
 
 // ================= SOUND =================
@@ -247,7 +253,24 @@ function isDuplicate(code){
 
   return false;
 }
+async function openScanner(){
 
+  if(scannerOpened) return;
+
+  scannerOpened = true;
+
+  document.getElementById("reader").style.display = "block";
+
+  document.getElementById("scanBtn").style.display = "none";
+
+  if(cameras.length === 0){
+
+    result.innerHTML =
+      "❌ Không tìm thấy camera";
+
+    return;
+  }
+}
 
 // ================= START CAMERA =================
 
