@@ -256,13 +256,7 @@ async function openScanner(){
 
   document.getElementById("scanBtn").style.display = "none";
 
-  if(cameras.length === 0){
-
-    result.innerHTML =
-      "❌ Không tìm thấy camera";
-
-    return;
-  }
+  result.innerHTML = "📷 Đang mở camera...";
 
   startCamera();
 }
@@ -273,8 +267,6 @@ async function startCamera(){
 
   try{
 
-    result.innerHTML = "📷 Đang mở camera...";
-
     if(cameraStarted){
 
       await html5QrCode.stop();
@@ -284,7 +276,9 @@ async function startCamera(){
 
     await html5QrCode.start(
 
-      cameraId,
+      {
+        facingMode:"environment"
+      },
 
       {
         fps:20,
@@ -294,11 +288,7 @@ async function startCamera(){
           height:180
         },
 
-        aspectRatio:1.777,
-
-        videoConstraints:{
-          facingMode:"environment"
-        }
+        aspectRatio:1.777
       },
 
       onScan
@@ -315,8 +305,6 @@ async function startCamera(){
     result.innerHTML = "❌ Không mở được camera";
   }
 }
-
-
 // ================= SCAN =================
 
 function onScan(decodedText){
