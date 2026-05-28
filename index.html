@@ -81,7 +81,36 @@ button{
     opacity:1;
   }
 }
+#scanBtn{
 
+  position:fixed;
+
+  bottom:20px;
+
+  left:50%;
+
+  transform:translateX(-50%);
+
+  width:85%;
+
+  max-width:500px;
+
+  padding:22px;
+
+  font-size:28px;
+
+  font-weight:bold;
+
+  border-radius:20px;
+
+  background:#00aa55;
+
+  color:white;
+
+  z-index:9999;
+
+  box-shadow:0 0 20px rgba(0,0,0,.4);
+}
 </style>
 </head>
 
@@ -103,7 +132,7 @@ button{
 </button>
 
 <div id="result">
-📷 Sẵn sàng quét
+📷 Nhấn bắt đầu để quét
 </div>
 
 <div id="popup"></div>
@@ -248,15 +277,16 @@ function isDuplicate(code){
 }
 async function openScanner(){
 
-  if(scannerOpened) return;
+  if(cameraStarted) return;
 
-  scannerOpened = true;
+  document.getElementById("reader").style.display =
+    "block";
 
-  document.getElementById("reader").style.display = "block";
+  document.getElementById("scanBtn").style.display =
+    "none";
 
-  document.getElementById("scanBtn").style.display = "none";
-
-  result.innerHTML = "📷 Đang mở camera...";
+  result.innerHTML =
+    "📷 Đang mở camera...";
 
   startCamera();
 }
@@ -304,6 +334,29 @@ async function startCamera(){
 
     result.innerHTML = "❌ Không mở được camera";
   }
+}
+// ================= Stop CAMERA =================
+  async function stopCamera(){
+
+  try{
+
+    if(cameraStarted){
+
+      await html5QrCode.stop();
+
+      cameraStarted = false;
+    }
+
+  }catch(e){
+
+    console.log(e);
+  }
+
+  document.getElementById("reader").style.display =
+    "none";
+
+  document.getElementById("scanBtn").style.display =
+    "block";
 }
 // ================= SCAN =================
 
@@ -434,14 +487,16 @@ function handleResult(res){
 
 function resetScan(){
 
-  setTimeout(()=>{
+  setTimeout(async ()=>{
 
     hidePopup();
 
     scanning = true;
 
     result.innerHTML =
-      "📷 Sẵn sàng quét";
+      "📷 Nhấn bắt đầu để quét";
+
+    await stopCamera();
 
   },1500);
 }
